@@ -1,0 +1,6 @@
+{
+  "appId": "com.chakib.suivideproduction",
+  "appName": "Suivi de production",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
