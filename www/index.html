@@ -79,7 +79,7 @@
   .badge-off{ color:var(--red); }
   .progress{ display:flex; justify-content:space-between; align-items:baseline; font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:var(--grey); margin:20px 0 0; }
   .progress b{ color:var(--ink); font-size:14px; }
-  .hero{ font-size:64px; font-weight:800; line-height:1; letter-spacing:-.02em; margin:6px 0 4px; }
+  .hero{ font-size:52px; font-weight:800; line-height:1; letter-spacing:-.02em; margin:6px 0 4px; }
   .hero-meta{ font-size:13px; color:var(--grey); margin-bottom:4px; }
   .moule-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-top:1px solid var(--line); gap:12px; }
   .moule-info{ display:flex; flex-direction:column; }
@@ -105,8 +105,9 @@
   .param-item .swatch{ flex:0 0 24px; width:24px; height:24px; }
   .param-item .btn-danger{ flex:0 0 36px; padding:6px; margin:0; font-size:14px; }
   .form-row{ display:flex; gap:8px; margin-top:10px; align-items:flex-end; }
+  .form-row .btn-primary, .form-row .btn-secondary, .form-row .btn-quiet{ width:auto; }
   .form-row input, .form-row select{ flex:1; margin-top:0; }
-  .form-row button{ flex:0 0 auto; padding:8px 16px; margin:0; }
+  .form-row button{ flex:1 1 auto; padding:8px 12px; margin:0; }
   .hidden-section{ margin-top:30px; padding-top:20px; border-top:1px dashed var(--line); }
   .hidden-toggle{ background:none; border:none; color:var(--grey); font-size:11px; text-decoration:underline; cursor:pointer; padding:0; margin:0; text-transform:uppercase; letter-spacing:.03em; }
   .hidden-content{ display:none; margin-top:10px; padding:12px; background:var(--pale); border:1px solid var(--line); }
@@ -148,11 +149,12 @@
   .moule-db-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; align-items:center; width:100%; }
   .moule-db-grid .db-head{ font-size:10px; color:var(--grey); text-transform:uppercase; letter-spacing:.04em; }
   .moule-db-grid input{ width:100%; box-sizing:border-box; margin:0; padding:8px; }
-  .moule-lookup{ display:grid; grid-template-columns:1fr 1.4fr 1fr; gap:8px; align-items:end; }
+  .moule-lookup{ display:grid; grid-template-columns:1.4fr .8fr .8fr; gap:8px; align-items:end; }
+  .moule-name-sub{ font-size:13px; font-weight:300; color:var(--ink); margin-top:3px; overflow-wrap:break-word; }
   .moule-lookup > div{ min-width:0; }
   .moule-lookup input{ margin-top:0; }
   .moule-lookup input[readonly]{ background:var(--pale); }
-  @media(max-width:420px){ .moule-db-grid,.moule-lookup{ grid-template-columns:.9fr 1.25fr 1fr; gap:5px; } }
+  @media(max-width:420px){ .moule-db-grid{ grid-template-columns:.9fr 1.25fr 1fr; gap:5px; } .moule-lookup{ grid-template-columns:1.3fr .8fr .8fr; gap:5px; } }
 
 
 .resume-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.resume-buttons button{flex:1;min-width:150px}.resume-moule-list{display:flex;flex-direction:column;gap:6px}.resume-moule-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px}.resume-moule-row span{font-weight:600}.atelier-summary{padding:12px 0;border-bottom:1px solid var(--line)}.atelier-summary h3{margin:0 0 6px}.atelier-summary.total{border-bottom:0;margin-top:8px;padding-top:16px;font-size:15px}
@@ -161,7 +163,7 @@
   .moule-suggestion:hover,.moule-suggestion:active{background:#f2f2f2;}
   .moule-suggestion b{margin-right:8px;}
 </style>
-</head>
+<style id="android-app-optimization">html{-webkit-text-size-adjust:100%;text-size-adjust:100%;overscroll-behavior:none;overscroll-behavior-y:none;overscroll-behavior-x:none;scroll-behavior:smooth}body{overscroll-behavior:none;overscroll-behavior-y:none;overscroll-behavior-x:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:manipulation;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}input,textarea,select,[contenteditable="true"]{user-select:text;-webkit-user-select:text;touch-action:auto}button,a,input,select,textarea{touch-action:manipulation}*{-webkit-tap-highlight-color:transparent}</style></head>
 <body>
 <div class="top-bar"></div>
 
@@ -217,12 +219,36 @@
 
 <div id="tournee" class="screen">
   <div class="progress" id="tourneeProgress"></div>
+  <label for="tourneeJumpAtelier" style="margin-top:10px;">Aller à l'atelier</label>
+  <select id="tourneeJumpAtelier" onchange="onJumpAtelierChange()"></select>
   <div id="tourneeCard"></div>
   <div class="btn-row">
     <button class="btn-secondary" style="margin-top:0;" onclick="stepTournee(-1)">‹ Précédent</button>
     <button class="btn-primary" style="margin-top:0;" onclick="stepTournee(1)">Suivant ›</button>
   </div>
-  <button class="btn-quiet" onclick="showScreen('home')">Quitter la tournée</button>
+  <button class="btn-quiet" onclick="quitTournee()">Quitter la tournée</button>
+</div>
+
+<div id="effectif" class="screen">
+  <div class="eyebrow">Tournée 1 — terminée</div>
+  <div class="title">Effectif du poste</div>
+  <div class="subtitle">Saisissez le nombre d'ouvriers</div>
+  <label for="effTotal">Nombre total d'ouvriers</label>
+  <input type="number" id="effTotal" min="0" inputmode="numeric" oninput="updateEffectifCalc()">
+  <label for="effPresent">Ouvriers présents</label>
+  <input type="number" id="effPresent" min="0" inputmode="numeric" oninput="updateEffectifCalc()">
+  <div class="stat-block" style="margin-top:18px;">Absences : <b id="effAbsent">0</b></div>
+
+  <div class="card" style="padding:10px 0;max-width:260px;">
+    <h2 style="font-size:12px;margin-bottom:4px;">Ouvriers saisis — Tournée 1</h2>
+    <table style="font-size:12px;margin-top:2px;">
+      <thead><tr><th style="padding:4px;">Atelier</th><th style="padding:4px;">Ouvriers</th></tr></thead>
+      <tbody id="effParAtelier"></tbody>
+      <tfoot><tr><td style="padding:4px;">Total</td><td id="effSaisisTotal" style="padding:4px;">0</td></tr></tfoot>
+    </table>
+  </div>
+
+  <button class="btn-primary" onclick="saveEffectif()">Terminer</button>
 </div>
 
 <div id="resume" class="screen">
@@ -238,7 +264,31 @@
   <div class="modal" id="modalContent"></div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+<!-- SheetJS: local file if bundled, otherwise CDN fallback is loaded below -->
+<script>
+(function(){
+  function loadScript(src){
+    return new Promise(function(resolve,reject){
+      var s=document.createElement('script');
+      s.src=src;
+      s.onload=resolve;
+      s.onerror=reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  // Try the bundled copy first. If the app package does not contain it,
+  // use the public SheetJS CDN.
+  loadScript('xlsx.full.min.js')
+    .catch(function(){
+      return loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    })
+    .catch(function(){
+      console.warn('SheetJS could not be loaded. Excel import/export will be unavailable.');
+    });
+})();
+</script>
+<script>
 /* ===== Résumé v20 : état déduit automatiquement des moules/cycles ===== */
 function resumeMachineStatus(machine){
   const cfg = (typeof config !== 'undefined' && config && config.machines) ? config.machines[machine.id] || {} : {};
@@ -284,11 +334,7 @@ function renderResumeMachinesV20(){
   const ordered = [...list].sort((a,b) => {
     const aa = Number(a.atelier || 0), bb = Number(b.atelier || 0);
     if (aa !== bb) return aa - bb;
-    const ia = (typeof MACHINES_PAR_ATELIER !== 'undefined' && MACHINES_PAR_ATELIER[aa])
-      ? MACHINES_PAR_ATELIER[aa].indexOf(String(a.numero || a.num)) : 9999;
-    const ib = (typeof MACHINES_PAR_ATELIER !== 'undefined' && MACHINES_PAR_ATELIER[bb])
-      ? MACHINES_PAR_ATELIER[bb].indexOf(String(b.numero || b.num)) : 9999;
-    return ia - ib;
+    return String(a.numero || a.num || '').localeCompare(String(b.numero || b.num || ''), undefined, {numeric:true});
   });
   let html = '';
   let current = null;
@@ -307,7 +353,7 @@ function renderResumeMachinesV20(){
 const CONFIG_KEY = 'injApp_config';
 const DAYS_KEY = 'injApp_days';
 const REFS_KEY = 'injApp_refs';
-const ATELIERS_COUNT = 4;
+const ATELIERS_COUNT = 4; // valeur historique, les ateliers sont désormais dynamiques
 const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
 
 function pad(n){ return n.toString().padStart(2,'0'); }
@@ -371,9 +417,7 @@ const MACHINES_PAR_ATELIER = {
   3: ['14233','14141','14135','14136','14137','14138','14303','14304','14002','14001'],
   4: ['14544','14145','14143','14134','14242','14207','14147','14132','14250','14549']
 };
-const REAL_MACHINES = Object.entries(MACHINES_PAR_ATELIER).flatMap(([atelier, nums]) =>
-  nums.map(numero => ({ id:'A'+atelier+'-'+numero, atelier:Number(atelier), numero, mouleId:null }))
-);
+let REAL_MACHINES = [];
 
 // Structure initiale des machines. Elle sert uniquement à initialiser la base.
 // Ensuite, la liste des machines est indépendante des moules et peut être modifiée.
@@ -444,6 +488,7 @@ const REAL_MACHINES = Object.entries(MACHINES_PAR_ATELIER).flatMap(([atelier, nu
   DataStore.saveConfig(config);
   DataStore.saveDays(days);
 })();
+REAL_MACHINES = refs.machines;
 
 // Compatibilité avec les anciennes données : créer la liste des matières et y récupérer les matières déjà utilisées.
 if(!Array.isArray(refs.materiaux)) refs.materiaux = [];
@@ -474,7 +519,7 @@ let selectedDate = todayStr();
 
 // Ordre strict demandé : atelier 1 puis 2 puis 3 puis 4,
 // et à l'intérieur de chaque atelier exactement l'ordre fourni.
-let machineIds = REAL_MACHINES.map(m => m.id).filter(id => !!config[id]);
+let machineIds = (Array.isArray(refs.machines)?refs.machines:[]).map(m => m.id).filter(id => !!config[id]);
 
 function saveConfig(){ DataStore.saveConfig(config); }
 function saveRefs(){ DataStore.saveRefs(refs); }
@@ -501,7 +546,11 @@ function ensureToday(){
   }
   machineIds.forEach(id=>{
     const dm = days[t].machines[id];
-    if(!dm) return;
+    if(!dm){
+      const cm=config[id]||{};
+      days[t].machines[id] = {mouleId:cm.mouleId||null,moulesAvances:[],operateur:cm.operateur||'',cycle:cm.cycle||'',matiere:cm.matiere||'',reference:cm.reference||'',production:'',sacs:'',broye:'',rebuts:'',statut:'marche',arrets:[]};
+      return;
+    }
     if(dm.rebuts === undefined) dm.rebuts = '';
     if(dm.moulesAvances === undefined) dm.moulesAvances = [];
     if(dm.mouleId === undefined) dm.mouleId = config[id].mouleId || null;
@@ -518,6 +567,58 @@ function showScreen(id){
   if(id==='parametres') renderParametres();
   if(id==='resume') renderResumeScreen();
   if(id==='moules') renderMoulesScreen();
+  if(id==='effectif') renderEffectifScreen();
+}
+
+function computeSaisisTournee1(){
+  const day = ensureToday();
+  const parAtelier = {}, total = new Set();
+  machineIds.forEach(id=>{
+    const m = day.machines[id];
+    const op = m && m.operateur ? String(m.operateur).trim() : '';
+    if(!op) return;
+    const at = (config[id] && config[id].atelier) || '?';
+    if(!parAtelier[at]) parAtelier[at] = new Set();
+    parAtelier[at].add(op);
+    total.add(at + '||' + op);
+  });
+  return { parAtelier, total: total.size };
+}
+
+function renderEffectifScreen(){
+  const day = ensureToday();
+  if(!day.effectif) day.effectif = {total:'', presents:''};
+  const elTotal = document.getElementById('effTotal'), elPresent = document.getElementById('effPresent');
+  if(elTotal) elTotal.value = day.effectif.total || '';
+  if(elPresent) elPresent.value = day.effectif.presents || '';
+  const data = computeSaisisTournee1();
+  const tbody = document.getElementById('effParAtelier');
+  if(tbody){
+    const ateliers = Object.keys(data.parAtelier).sort((a,b)=>Number(a)-Number(b));
+    tbody.innerHTML = ateliers.length
+      ? ateliers.map(at=>`<tr><td style="padding:4px;">Atelier ${esc(at)}</td><td style="padding:4px;">${data.parAtelier[at].size}</td></tr>`).join('')
+      : `<tr><td colspan="2" style="padding:4px;color:var(--grey);text-align:left;">Aucune saisie</td></tr>`;
+  }
+  const elSaisisTotal = document.getElementById('effSaisisTotal');
+  if(elSaisisTotal) elSaisisTotal.textContent = data.total;
+  updateEffectifCalc();
+}
+
+function updateEffectifCalc(){
+  const total = parseInt(document.getElementById('effTotal').value, 10) || 0;
+  const presents = parseInt(document.getElementById('effPresent').value, 10) || 0;
+  const absents = Math.max(total - presents, 0);
+  document.getElementById('effAbsent').textContent = absents;
+}
+
+function saveEffectif(){
+  const day = ensureToday();
+  const total = parseInt(document.getElementById('effTotal').value, 10) || 0;
+  const presents = parseInt(document.getElementById('effPresent').value, 10) || 0;
+  const absents = Math.max(total - presents, 0);
+  day.effectif = { total, presents, absents };
+  saveDays();
+  showScreen('home');
 }
 
 function renderHome(){
@@ -565,17 +666,24 @@ function renderParametres(){
 }
 
 function renderOperateursTab(el){
-  let html = '<div class="param-list">';
+  let html = `
+    <div style="padding:10px 0 4px;color:var(--grey);font-size:12px;">Base de référence des opérateurs. Importez une liste Excel ou ajoutez un opérateur exceptionnellement.</div>
+    <div class="form-row">
+      <button class="btn-secondary" onclick="importOperateursExcel()">📥 Importer Excel</button>
+      <button class="btn-secondary" onclick="downloadReferenceTemplate('operateurs')">📄 Modèle</button>
+    </div>
+    <div class="param-list">`;
   refs.operateurs.forEach((op, i) => {
-    html += `<div class="param-item"><div class="info"><b>${op}</b></div><div class="row" style="width:auto;gap:6px;"><button class="btn-secondary" onclick="editOperateur(${i})">Modifier</button><button class="btn-danger" onclick="removeOperateur(${i})">✕</button></div></div>`;
+    html += `<div class="param-item"><div class="info"><b>${esc(op)}</b></div><div class="row" style="width:auto;gap:6px;"><button class="btn-secondary" onclick="editOperateur(${i})">Modifier</button><button class="btn-danger" onclick="removeOperateur(${i})">✕</button></div></div>`;
   });
   html += '</div>';
-  html += `<div class="form-row"><input type="text" id="newOperateur" placeholder="Nom de l'opérateur"><button class="btn-primary" style="padding:8px 16px;" onclick="addOperateur()">+</button></div>`;
+  html += `<div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);"><div style="font-size:12px;color:var(--grey);margin-bottom:6px;">Ajout manuel — cas particulier</div><div class="form-row"><input type="text" id="newOperateur" placeholder="Nom de l'opérateur"><button class="btn-primary" style="padding:8px 16px;" onclick="addOperateur()">+ Ajouter</button></div></div>`;
   el.innerHTML = html;
 }
 function addOperateur(){
   const v = document.getElementById('newOperateur').value.trim();
   if(!v) return;
+  if(refs.operateurs.some(x=>String(x).trim().toLowerCase()===v.toLowerCase())){ alert('Cet opérateur existe déjà.'); return; }
   refs.operateurs.push(v); saveRefs(); renderParametres();
 }
 function esc(v){ return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;'); }
@@ -598,23 +706,22 @@ function renderMoulesTab(el){
         <div><div class="db-head">N° moule</div><input value="${esc(m.numero)}" onchange="quickEditMoule(${i}, 'numero', this.value)"></div>
         <div><div class="db-head">Nom du moule</div><input value="${esc(m.nom)}" onchange="quickEditMoule(${i}, 'nom', this.value)"></div>
         <div><div class="db-head">Pièces théoriques</div><input type="number" min="1" value="${m.piecesParMoule}" onchange="quickEditMoule(${i}, 'piecesParMoule', this.value)"></div>
-        <div><div class="db-head">Pièces réelles</div><input type="number" min="1" value="${m.piecesReelles||''}" onchange="quickEditMoule(${i}, 'piecesReelles', this.value)"></div>
       </div>
       <div style="display:flex;justify-content:flex-end;align-items:center;margin-top:7px;">
         <button class="btn-danger" style="width:36px;padding:6px;margin:0;" onclick="removeMoule(${i})">✕</button>
       </div>
     </div>`;
   });
-  html += '</div>';
+  html = `<div style="padding:10px 0 4px;color:var(--grey);font-size:12px;">Base de référence des moules. Un fichier Excel peut contenir des centaines ou milliers de moules.</div>
+    <div class="form-row"><button class="btn-secondary" onclick="importMoulesExcel()">📥 Importer Excel</button><button class="btn-secondary" onclick="downloadReferenceTemplate('moules')">📄 Modèle</button></div>` + html;
   html += `<div style="margin-top:12px; padding:12px; background:var(--pale); border:1px solid var(--line);">
-    <label style="margin:0;">Nouveau moule</label>
+    <label style="margin:0;">Ajout manuel — cas particulier</label>
     <div class="moule-db-grid" style="margin-top:8px;">
       <input type="text" id="newMouleNum" placeholder="N° (M004)">
       <input type="text" id="newMouleNom" placeholder="Nom du moule">
       <input type="number" id="newMoulePieces" placeholder="Pièces théoriques" min="1">
-      <input type="number" id="newMoulePiecesReelles" placeholder="Pièces réelles" min="1">
     </div>
-    <button class="btn-primary" style="margin-top:10px;" onclick="addMoule()">Ajouter le moule</button>
+    <button class="btn-primary" style="margin-top:10px;" onclick="addMoule()">+ Ajouter le moule</button>
   </div>`;
   el.innerHTML = html;
 }
@@ -629,10 +736,9 @@ function addMoule(){
   const num = document.getElementById('newMouleNum').value.trim();
   const nom = document.getElementById('newMouleNom').value.trim();
   const pieces = parseInt(document.getElementById('newMoulePieces').value) || 0;
-  const piecesReelles = parseInt(document.getElementById('newMoulePiecesReelles').value) || pieces;
-  const machineId = document.getElementById('newMouleMachine').value;
   if(!num || !nom || pieces<1){ alert('Numéro, nom et pièces théoriques sont requis'); return; }
-  refs.moules.push({id:generateId('m'), numero:num, nom:nom, piecesParMoule:pieces, piecesReelles:piecesReelles, machineIds:machineId?[machineId]:[]});
+  if(refs.moules.some(x=>String(x.numero).trim().toLowerCase()===num.toLowerCase())){ alert('Ce numéro de moule existe déjà.'); return; }
+  refs.moules.push({id:generateId('m'), numero:num, nom:nom, piecesParMoule:pieces});
   saveRefs(); renderParametres();
 }
 function editMoule(i){ const m=refs.moules[i]; openEditForm('Modifier le moule', `<label>Numéro</label><input id=\"editNum\" value=\"${esc(m.numero)}\"><label>Nom</label><input id=\"editName\" value=\"${esc(m.nom)}\"><label>Pièces théoriques</label><input id=\"editPieces\" type=\"number\" min=\"1\" value=\"${m.piecesParMoule}\"><label>Pièces réelles</label><input id=\"editPiecesReelles\" type=\"number\" min=\"1\" value=\"${m.piecesReelles||m.piecesParMoule}\">`, ()=>{ const num=document.getElementById('editNum').value.trim(), nom=document.getElementById('editName').value.trim(), p=parseInt(document.getElementById('editPieces').value), pr=parseInt(document.getElementById('editPiecesReelles').value); if(num&&nom&&p>0&&pr>0){m.numero=num;m.nom=nom;m.piecesParMoule=p;m.piecesReelles=pr;saveRefs();closeModal();renderParametres();} }); }
@@ -642,14 +748,18 @@ function removeMoule(i){
 }
 
 function renderMachinesTab(el){
-  let html = '<div class="param-list">', curAtelier = null;
-  refs.machines.forEach((m, i) => {
+  let html = `<div style="padding:10px 0 4px;color:var(--grey);font-size:12px;">Les ateliers sont dynamiques : vous pouvez créer l’Atelier 5, 6, etc. et importer leurs machines en masse.</div>
+    <div class="form-row"><button class="btn-secondary" onclick="importMachinesExcel()">📥 Importer Excel</button><button class="btn-secondary" onclick="downloadReferenceTemplate('machines')">📄 Modèle</button><button class="btn-primary" onclick="addMachineManual()">+ Ajouter</button></div>`;
+  html += '<div class="param-list">';
+  let curAtelier = null;
+  [...refs.machines].sort((a,b)=>Number(a.atelier)-Number(b.atelier) || String(a.numero).localeCompare(String(b.numero),undefined,{numeric:true})).forEach((m) => {
+    const i=refs.machines.indexOf(m);
     if(m.atelier !== curAtelier){
       curAtelier = m.atelier;
-      html += `<h2 style="margin-top:16px; font-size:13px;">Atelier ${curAtelier}</h2>`;
+      html += `<h2 style="margin-top:16px; font-size:13px;">Atelier ${esc(curAtelier)}</h2>`;
     }
     html += `<div class="param-item">
-      <div class="info"><b>${esc(m.numero)}</b><span>Machine ${i+1} — Atelier ${m.atelier}</span></div>
+      <div class="info"><b>${esc(m.numero)}</b><span>Atelier ${esc(m.atelier)}</span></div>
       <button class="btn-secondary" style="width:auto;padding:6px 10px;" onclick="editMachine(${i})">Modifier</button>
     </div>`;
   });
@@ -658,21 +768,21 @@ function renderMachinesTab(el){
 }
 function editMachine(i){
   const m=refs.machines[i]; if(!m) return;
-  openEditForm('Modifier la machine', `<label>Numéro de machine</label><input id="editMachineNum" value="${esc(m.numero)}">`, ()=>{
+  openEditForm('Modifier la machine', `<label>Atelier</label><input id="editMachineAtelier" type="number" min="1" value="${esc(m.atelier)}"><label>Numéro de machine</label><input id="editMachineNum" value="${esc(m.numero)}">`, ()=>{
+    const atelier=parseInt(document.getElementById('editMachineAtelier').value,10);
     const v=document.getElementById('editMachineNum').value.trim();
-    if(!v) return;
-    const duplicate=refs.machines.some((x,j)=>j!==i && String(x.numero).trim()===v);
+    if(!atelier || atelier<1 || !v) return;
+    const duplicate=refs.machines.some((x,j)=>j!==i && String(x.numero).trim().toLowerCase()===v.toLowerCase());
     if(duplicate){ alert('Ce numéro de machine existe déjà.'); return; }
-    m.numero=v;
-    // garder l'identifiant interne stable pour ne pas perdre les données de production
-    config[m.id]=config[m.id]||{};
-    config[m.id].num=v;
-    saveRefs(); saveConfig(); closeModal(); renderParametres();
+    const oldId=m.id;
+    m.atelier=atelier; m.numero=v;
+    config[m.id]=config[m.id]||{}; config[m.id].atelier=atelier; config[m.id].num=v;
+    saveRefs(); saveConfig(); closeModal(); refreshMachineRuntime(); renderParametres();
   });
 }
 
 function renderCouleursTab(el){
-  let html='<div class="param-list">';
+  let html='<div style="padding:10px 0 4px;color:var(--grey);font-size:12px;">Base de référence des couleurs. Importez une liste Excel ou ajoutez une couleur exceptionnelle.</div><div class="form-row"><button class="btn-secondary" onclick="importCouleursExcel()">📥 Importer Excel</button><button class="btn-secondary" onclick="downloadReferenceTemplate(\'couleurs\')">📄 Modèle</button></div><div class="param-list">';
   refs.couleurs.forEach((c,i)=>{ html+=`<div class="param-item"><div class="info"><b>${esc(c.nom)}</b><span>Code : ${esc(c.hex||'')}</span></div><div class="row" style="width:auto;gap:6px;"><button class="btn-secondary" onclick="editCouleur(${i})">Modifier</button><button class="btn-danger" onclick="removeCouleur(${i})">✕</button></div></div>`; });
   html+='</div><div class="form-row"><input type="text" id="newCouleurNom" placeholder="Nom de la couleur"><input type="text" id="newCouleurHex" placeholder="Code HEX (optionnel)"><button class="btn-primary" style="padding:8px 16px;" onclick="addCouleur()">+</button></div>';
   el.innerHTML=html;
@@ -682,7 +792,7 @@ function editCouleur(i){ const c=refs.couleurs[i]; openEditForm('Modifier la cou
 function removeCouleur(i){ if(!confirm('Supprimer cette couleur ?'))return; refs.couleurs.splice(i,1); saveRefs(); renderParametres(); }
 
 function renderMateriauxTab(el){
-  let html='<div class="param-list">';
+  let html='<div style="padding:10px 0 4px;color:var(--grey);font-size:12px;">Base de référence des matières. Importez une liste Excel ou ajoutez une matière exceptionnelle.</div><div class="form-row"><button class="btn-secondary" onclick="importMateriauxExcel()">📥 Importer Excel</button><button class="btn-secondary" onclick="downloadReferenceTemplate(\'materiaux\')">📄 Modèle</button></div><div class="param-list">';
   refs.materiaux.forEach((m,i)=>{
     html += `<div class="param-item"><div class="info"><b>${m}</b></div><div class="row" style="width:auto;gap:6px;"><button class="btn-secondary" onclick="editMateriau(${i})">Modifier</button><button class="btn-danger" onclick="removeMateriau(${i})">✕</button></div></div>`;
   });
@@ -694,7 +804,7 @@ function editMateriau(i){ openEditForm('Modifier la matière', `<label>Matière<
 function removeMateriau(i){ if(!confirm('Supprimer cette matière ?'))return; refs.materiaux.splice(i,1); saveRefs(); renderParametres(); }
 
 function renderCausesTab(el){
-  let html = '<div class="param-list">';
+  let html = '<div style="padding:10px 0 4px;color:var(--grey);font-size:12px;">Base de référence des types d’arrêt. Importez une liste Excel ou ajoutez un type exceptionnellement.</div><div class="form-row"><button class="btn-secondary" onclick="importCausesExcel()">📥 Importer Excel</button><button class="btn-secondary" onclick="downloadReferenceTemplate(\'causes\')">📄 Modèle</button></div><div class="param-list">';
   refs.causes.forEach((c, i) => {
     html += `<div class="param-item"><div class="info"><b>${c}</b></div><div class="row" style="width:auto;gap:6px;"><button class="btn-secondary" onclick="editCause(${i})">Modifier</button><button class="btn-danger" onclick="removeCause(${i})">✕</button></div></div>`;
   });
@@ -711,6 +821,224 @@ function editCause(i){ openEditForm('Modifier la cause d’arrêt', `<label>Caus
 function removeCause(i){
   if(!confirm('Supprimer cette cause ?')) return;
   refs.causes.splice(i, 1); saveRefs(); renderParametres();
+}
+
+
+function normalizeHeader(v){
+  return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+}
+function firstField(row, names){
+  const keys=Object.keys(row||{});
+  const wanted=names.map(normalizeHeader);
+  const key=keys.find(k=>wanted.includes(normalizeHeader(k)));
+  return key===undefined ? '' : row[key];
+}
+function ensureXLSX(){
+  if(typeof XLSX === 'undefined'){
+    alert('La bibliothèque Excel (SheetJS) n’est pas disponible. Vérifiez la connexion Internet ou ajoutez xlsx.full.min.js dans le dossier de l’application.');
+    return false;
+  }
+  return true;
+}
+
+function openExcelPicker(handler, accept='.xlsx,.xls'){
+  const input=document.createElement('input');
+  input.type='file'; input.accept=accept; input.style.display='none';
+  document.body.appendChild(input);
+  input.onchange=()=>{ const f=input.files&&input.files[0]; if(f) handler(f); setTimeout(()=>input.remove(),0); };
+  input.click();
+}
+function readExcelRows(file, preferredSheet){
+  if(!ensureXLSX()) return Promise.reject(new Error('Bibliothèque Excel indisponible.'));
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const sheetName=preferredSheet && wb.SheetNames.includes(preferredSheet) ? preferredSheet : wb.SheetNames[0];
+        if(!sheetName) throw new Error('Aucune feuille Excel trouvée.');
+        resolve({rows:XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{defval:''}),sheetName});
+      }catch(err){reject(err);}
+    };
+    reader.onerror=()=>reject(new Error('Lecture du fichier impossible.'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+function importOperateursExcel(){
+  openExcelPicker(async file=>{
+    try{
+      const {rows}=await readExcelRows(file,'Opérateurs');
+      let added=0, skipped=0;
+      rows.forEach(r=>{
+        const nom=String(firstField(r,['Nom','Operateur','Opérateur','Ouvrier','OuvrierNom'])).trim();
+        if(!nom){skipped++;return;}
+        if(refs.operateurs.some(x=>String(x).trim().toLowerCase()===nom.toLowerCase())){skipped++;return;}
+        refs.operateurs.push(nom); added++;
+      });
+      saveRefs(); renderParametres(); alert(`Import opérateurs terminé : ${added} ajouté(s), ${skipped} ignoré(s).`);
+    }catch(e){alert('Erreur import opérateurs : '+e.message);}
+  });
+}
+function importMoulesExcel(){
+  openExcelPicker(async file=>{
+    try{
+      const {rows}=await readExcelRows(file,'Moules');
+      let added=0, skipped=0;
+      rows.forEach(r=>{
+        const numero=String(firstField(r,['Numero','Numéro','NoMoule','N°Moule','Moule'])).trim();
+        if(!numero){skipped++;return;}
+        if(refs.moules.some(x=>String(x.numero).trim().toLowerCase()===numero.toLowerCase())){skipped++;return;}
+        const nom=String(firstField(r,['Nom','NomMoule','Designation','Désignation'])).trim() || numero;
+        const piecesRaw=firstField(r,['PiecesParMoule','PiècesParMoule','PiecesTheoriques','PiècesThéoriques','Pieces']);
+        const pieces=parseInt(piecesRaw,10);
+        refs.moules.push({id:generateId('m'),numero,nom,piecesParMoule:Number.isFinite(pieces)&&pieces>0?pieces:0,piecesReelles:Number.isFinite(pieces)&&pieces>0?pieces:''});
+        added++;
+      });
+      saveRefs(); renderParametres(); alert(`Import moules terminé : ${added} ajouté(s), ${skipped} ignoré(s).`);
+    }catch(e){alert('Erreur import moules : '+e.message);}
+  });
+}
+function refreshMachineRuntime(){
+  REAL_MACHINES=Array.isArray(refs.machines)?refs.machines:[];
+  REAL_MACHINES.forEach(m=>{
+    if(!m.id) m.id='A'+m.atelier+'-'+m.numero;
+    if(!config[m.id]) config[m.id]={atelier:Number(m.atelier)||0,num:String(m.numero||''),mouleId:null,operateur:'',cycle:'',matiere:'',reference:''};
+  });
+  machineIds=REAL_MACHINES.map(m=>m.id).filter(id=>!!config[id]);
+  saveRefs(); saveConfig();
+}
+function importMachinesExcel(){
+  openExcelPicker(async file=>{
+    try{
+      const {rows}=await readExcelRows(file,'Machines');
+      let added=0, skipped=0;
+      rows.forEach(r=>{
+        const atelierRaw=firstField(r,['Atelier','Workshop','WorkShop']);
+        const numero=String(firstField(r,['Machine','NumeroMachine','NuméroMachine','Numero','Numéro','N°Machine'])).trim();
+        const atelier=parseInt(atelierRaw,10);
+        if(!numero || !Number.isFinite(atelier) || atelier<1){skipped++;return;}
+        if(refs.machines.some(x=>String(x.numero).trim().toLowerCase()===numero.toLowerCase())){skipped++;return;}
+        refs.machines.push({id:'A'+atelier+'-'+numero,atelier,numero,mouleId:null}); added++;
+      });
+      refreshMachineRuntime(); renderParametres(); renderHome(); alert(`Import machines terminé : ${added} ajouté(s), ${skipped} ignoré(s).`);
+    }catch(e){alert('Erreur import machines : '+e.message);}
+  });
+}
+function addMachineManual(){
+  openEditForm('Ajouter une machine', `<label>Atelier</label><input id="newMachineAtelier" type="number" min="1" placeholder="Ex. 5"><label>Numéro de machine</label><input id="newMachineNum" placeholder="Ex. 15001">`, ()=>{
+    const atelier=parseInt(document.getElementById('newMachineAtelier').value,10);
+    const numero=document.getElementById('newMachineNum').value.trim();
+    if(!atelier || atelier<1 || !numero){alert('Atelier et numéro sont requis.');return;}
+    if(refs.machines.some(x=>String(x.numero).trim().toLowerCase()===numero.toLowerCase())){alert('Ce numéro de machine existe déjà.');return;}
+    const m={id:'A'+atelier+'-'+numero,atelier,numero,mouleId:null};
+    refs.machines.push(m); config[m.id]={atelier,num:numero,mouleId:null,operateur:'',cycle:'',matiere:'',reference:''};
+    refreshMachineRuntime(); closeModal(); renderParametres(); renderHome();
+  });
+}
+function downloadReferenceTemplate(type){
+  if(!ensureXLSX()) return;
+  try{
+    const wb=XLSX.utils.book_new();
+    if(type==='operateurs') XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Nom'],['Ahmed'],['Mohamed']]),'Opérateurs');
+    if(type==='moules') XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Numero','Nom','PiecesParMoule'],['M001','Moule A',8]]),'Moules');
+    if(type==='machines') XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Atelier','Machine'],[1,'14301'],[5,'15001']]),'Machines');
+    if(type==='couleurs') XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Nom','Hex'],['Rouge','#D2232A'],['Jaune','#E8A33D']]),'Couleurs');
+    if(type==='causes') XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['TypeArret'],['Panne machine'],['Changement de moule']]),'Arrêts');
+    if(type==='materiaux') XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['Matiere'],['Matière standard']]),'Matières');
+    const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+    const blob=new Blob([wbout],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    saveOrShareBlob(blob,'modele_'+type+'.xlsx',blob.type).catch(e=>alert('Erreur partage : '+(e&&e.message?e.message:e)));
+  }catch(e){
+    alert('Erreur génération modèle : '+(e&&e.message?e.message:e));
+  }
+}
+
+// Enregistre/partage un fichier de façon fiable, y compris dans l'application Android (Capacitor WebView),
+// où le téléchargement classique du navigateur (Blob + <a download>) ne fonctionne pas.
+function blobToBase64(blob){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onloadend=()=>resolve(String(reader.result).split(',')[1]);
+    reader.onerror=reject;
+    reader.readAsDataURL(blob);
+  });
+}
+async function saveOrShareBlob(blob, filename, mimeType){
+  try{
+    if(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem){
+      const { Filesystem } = window.Capacitor.Plugins;
+      const base64 = await blobToBase64(blob);
+      const result = await Filesystem.writeFile({ path: filename, data: base64, directory: 'CACHE' });
+      if(window.Capacitor.Plugins.Share){
+        await window.Capacitor.Plugins.Share.share({ title: filename, url: result.uri, dialogTitle: 'Enregistrer / Partager' });
+      } else {
+        alert('Fichier enregistré : ' + result.uri);
+      }
+      return;
+    }
+  }catch(e){ console.error('saveOrShareBlob (Capacitor)', e); }
+  if(navigator.share){
+    try{
+      const file=new File([blob],filename,{type:mimeType});
+      if(!navigator.canShare || navigator.canShare({files:[file]})){
+        await navigator.share({title:filename,files:[file]});
+        return;
+      }
+    }catch(e){}
+  }
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=filename; a.style.display='none';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500);
+}
+
+function addUniqueStringReference(arr, value){
+  const v=String(value??'').trim();
+  if(!v) return false;
+  if(arr.some(x=>String(x).trim().toLowerCase()===v.toLowerCase())) return false;
+  arr.push(v); return true;
+}
+function importMateriauxExcel(){
+  openExcelPicker(async file=>{
+    try{
+      const {rows}=await readExcelRows(file,'Matières');
+      let added=0, skipped=0;
+      rows.forEach(r=>{
+        const v=String(firstField(r,['Matiere','Matière','Nom','Material'])).trim();
+        if(addUniqueStringReference(refs.materiaux,v)) added++; else skipped++;
+      });
+      saveRefs(); renderParametres(); alert(`Import matières terminé : ${added} ajouté(s), ${skipped} ignoré(s).`);
+    }catch(e){alert('Erreur import matières : '+e.message);}
+  });
+}
+function importCausesExcel(){
+  openExcelPicker(async file=>{
+    try{
+      const {rows}=await readExcelRows(file,'Arrêts');
+      let added=0, skipped=0;
+      rows.forEach(r=>{
+        const v=String(firstField(r,['TypeArret','TypeArrêt','Cause','CauseArret','CauseArrêt','Arret','Arrêt','Nom'])).trim();
+        if(addUniqueStringReference(refs.causes,v)) added++; else skipped++;
+      });
+      saveRefs(); renderParametres(); alert(`Import types d'arrêt terminé : ${added} ajouté(s), ${skipped} ignoré(s).`);
+    }catch(e){alert('Erreur import types d’arrêt : '+e.message);}
+  });
+}
+function importCouleursExcel(){
+  openExcelPicker(async file=>{
+    try{
+      const {rows}=await readExcelRows(file,'Couleurs');
+      let added=0, skipped=0;
+      rows.forEach(r=>{
+        const nom=String(firstField(r,['Nom','Couleur','Name'])).trim();
+        const hex=String(firstField(r,['Hex','HEX','CodeHex','CodeHEX','CodeCouleur'])).trim();
+        if(!nom){skipped++;return;}
+        if(refs.couleurs.some(c=>String(c.nom).trim().toLowerCase()===nom.toLowerCase())){skipped++;return;}
+        refs.couleurs.push({id:generateId('c'),nom,hex}); added++;
+      });
+      saveRefs(); renderParametres(); alert(`Import couleurs terminé : ${added} ajouté(s), ${skipped} ignoré(s).`);
+    }catch(e){alert('Erreur import couleurs : '+e.message);}
+  });
 }
 
 function renderMoulesScreen(){
@@ -760,7 +1088,7 @@ function showMouleSuggestions(value, machineId){
   const q=String(value||'').trim().toLowerCase();
   const list=refs.moules.filter(m => !q || String(m.numero).toLowerCase().includes(q) || String(m.nom).toLowerCase().includes(q));
   if(!list.length){ box.innerHTML=''; box.style.display='none'; return; }
-  box.innerHTML=list.map(m => `<div class="moule-suggestion" onmousedown="selectMouleSuggestion('${machineId}','${esc(m.id)}')"><b>${esc(m.numero)}</b>${esc(m.nom)}</div>`).join('');
+  box.innerHTML=list.map(m => `<div class="moule-suggestion" onmousedown="selectMouleSuggestion('${machineId}','${esc(m.id)}')"><b>${esc(m.numero)}</b></div>`).join('');
   box.style.display='block';
 }
 function selectMouleSuggestion(machineId, mouleId){
@@ -782,13 +1110,15 @@ document.addEventListener('click', function(e){
 function lookupMoule(machineId, numero){
   const day=ensureToday(), m=day.machines[machineId];
   const found=refs.moules.find(x=>String(x.numero).toLowerCase()===String(numero).trim().toLowerCase());
-  const nom=document.getElementById('f_moule_nom'), theo=document.getElementById('f_moule_theorique'), reel=document.getElementById('f_moule_reel');
+  const nom=document.getElementById('f_moule_nom'), theo=document.getElementById('f_moule_theorique'), reel=document.getElementById('f_moule_reel'), hero=document.getElementById('heroMouleInfo');
   if(found){
-    if(nom) nom.value=found.nom;
+    if(nom) nom.textContent=found.nom;
     if(theo) theo.value=found.piecesParMoule; if(reel) reel.value=found.piecesReelles||'';
     m.mouleId=found.id; config[machineId].mouleId=found.id;
+    if(hero) hero.innerHTML = `<span style="font-size:19px;font-weight:800;line-height:1.2;overflow-wrap:break-word;">${esc(found.numero)}</span><span style="font-size:12px;color:var(--grey);"> (${found.piecesParMoule} pièces)</span><div class="moule-name-sub">${esc(found.nom||'')}</div>`;
   } else {
-    if(nom) nom.value=''; if(theo) theo.value=''; if(reel) reel.value='';
+    if(nom) nom.textContent=''; if(theo) theo.value=''; if(reel) reel.value='';
+    if(hero) hero.innerHTML = '<span style="font-size:14px;color:var(--grey);">Aucun moule assigné</span>';
     if(!numero.trim()){ m.mouleId=null; config[machineId].mouleId=null; saveDays(); saveConfig(); }
   }
 }
@@ -796,18 +1126,21 @@ function lookupMoule(machineId, numero){
 function renderTourneeStep(){
   const day = ensureToday(), id = machineIds[currentIndex], c = config[id], m = day.machines[id];
   document.getElementById('tourneeProgress').innerHTML = `<span>Atelier ${c.atelier} — Tournée ${currentTournee}</span><b>${pad(currentIndex+1)} / ${machineIds.length}</b>`;
+  populateTourneeJump();
   const card = document.getElementById('tourneeCard');
   if(currentTournee === 1){
+    const moule = mouleForId(m.mouleId);
+    const mouleInfo = moule ? `<span style="font-size:19px;font-weight:800;line-height:1.2;overflow-wrap:break-word;">${esc(moule.numero)}</span><span style="font-size:12px;color:var(--grey);"> (${moule.piecesParMoule} pièces)</span><div class="moule-name-sub">${esc(moule.nom||'')}</div>` : `<span style="font-size:14px;color:var(--grey);">Aucun moule assigné</span>`;
     card.innerHTML = `
-      <div class="hero-meta">Machine</div><div class="hero">${c.num}</div><hr class="rule-light">
+      <div class="hero-meta">Machine</div><div class="hero">${c.num}</div><div id="heroMouleInfo" style="margin-top:4px;">${mouleInfo}</div><hr class="rule-light">
       <label>Moule assigné</label>
       <div class="moule-lookup">
         <div class="moule-autocomplete" style="position:relative;">
           <label style="font-size:10px;">N° moule</label>
-          <input id="f_moule_num" autocomplete="off" value="${mouleForId(m.mouleId)?.numero||''}" placeholder="M004" oninput="lookupMoule('${id}', this.value); showMouleSuggestions(this.value, '${id}')" onfocus="showMouleSuggestions(this.value, '${id}')">
+          <input id="f_moule_num" autocomplete="off" style="font-size:18px;font-weight:800;" value="${mouleForId(m.mouleId)?.numero||''}" placeholder="M004" oninput="lookupMoule('${id}', this.value); showMouleSuggestions(this.value, '${id}')" onfocus="showMouleSuggestions(this.value, '${id}')">
           <div id="mouleSuggestions" class="moule-suggestions"></div>
+          <div id="f_moule_nom" class="moule-name-sub">${esc(mouleForId(m.mouleId)?.nom||'')}</div>
         </div>
-        <div><label style="font-size:10px;">Nom</label><input id="f_moule_nom" value="${mouleForId(m.mouleId)?.nom||''}" readonly></div>
         <div><label style="font-size:10px;">Pièces théoriques</label><input id="f_moule_theorique" value="${mouleForId(m.mouleId)?.piecesParMoule||''}" readonly></div>
         <div><label style="font-size:10px;">Pièces réelles</label><input id="f_moule_reel" type="number" min="0" value="${mouleForId(m.mouleId)?.piecesReelles||''}" placeholder="À saisir"></div>
       </div>
@@ -820,7 +1153,7 @@ function renderTourneeStep(){
       </div>
       <div class="setup-inline">
         <div><label>Matière</label><select id="f_matiere"><option value="">—</option>${refs.materiaux.map(x => `<option value="${x}" ${m.matiere===x?'selected':''}>${x}</option>`).join('')}</select></div>
-        <div><label>État</label><select id="f_statut"><option value="marche" ${m.statut!=='arret_total'?'selected':''}>En marche</option><option value="arret_total" ${m.statut==='arret_total'?'selected':''}>Arrêt total</option></select></div>
+        <div><label>État</label><select id="f_statut" onchange="onStatutT1Change('${id}', this.value)"><option value="marche" ${m.statut!=='arret_total'?'selected':''}>En marche</option><option value="arret_total" ${m.statut==='arret_total'?'selected':''}>Arrêt total</option></select></div>
       </div>
       <div class="hidden-section"><button class="hidden-toggle" onclick="toggleAdvanced('${id}')">+ Ajouter un 2ème moule</button>
         <div class="hidden-content" id="advanced_${id}"><div style="font-size:12px; color:var(--grey); margin-bottom:8px;">Le nom et les pièces théoriques sont récupérés automatiquement. Saisissez uniquement matière, couleur et cycle.</div>
@@ -830,13 +1163,19 @@ function renderTourneeStep(){
     renderAdvancedMoules(id);
   } else {
     tempArrets = (m.arrets && m.arrets.length) ? JSON.parse(JSON.stringify(m.arrets)) : [{cause:'', duree:''}];
+    if(m.statut === 'arret_total' && !tempArrets.some(a=>a.cause)){
+      if(!tempArrets[0]) tempArrets[0] = {cause:'', duree:''};
+      if(!tempArrets[0].cause) tempArrets[0].duree = 8;
+    }
     const moule = refs.moules.find(x => x.id === m.mouleId);
-    const mouleInfo = moule ? `Moule: ${moule.numero} (${moule.piecesParMoule} pièces)` : 'Aucun moule assigné';
+    const mouleInfo = moule ? `<span style="font-size:19px;font-weight:800;line-height:1.2;overflow-wrap:break-word;">${esc(moule.numero)}</span><span style="font-size:12px;color:var(--grey);"> (${moule.piecesParMoule} pièces)</span><div class="moule-name-sub">${esc(moule.nom||'')}</div>` : `<span style="font-size:14px;color:var(--grey);">Aucun moule assigné</span>`;
     card.innerHTML = `
-      <div class="hero-meta">Machine</div><div class="hero">${c.num}</div><div style="font-size:12px; color:var(--grey); margin-top:4px;">${mouleInfo}</div><hr class="rule-light">
-      <label>Quantité produite — moule principal</label><input id="f_production" type="number" min="0" value="${m.production}">
+      <div class="hero-meta">Machine</div><div class="hero">${c.num}</div><div style="margin-top:4px;">${mouleInfo}</div><hr class="rule-light">
+      <div><label>État</label><select id="f_statut_t2" style="width:auto;min-width:120px;font-size:13px;padding:6px 8px;" onchange="onStatutT2Change('${id}', this.value)"><option value="marche" ${m.statut!=='arret_total'?'selected':''}>En marche</option><option value="arret_total" ${m.statut==='arret_total'?'selected':''}>Arrêt total</option></select></div>
+      <label>Quantité produite — moule principal</label><input id="f_production" type="number" min="0" value="${m.production}" oninput="updateT2Rate('${id}')">
+      <div id="t2RateDisplay" style="margin-top:6px;"></div>
       <div class="form-row"><div style="flex:1"><label>Nombre de sacs matière</label><input id="f_sacs" type="number" min="0" value="${m.sacs}"></div><div style="flex:1"><label>Matière broyée</label><input id="f_broye" type="number" min="0" value="${m.broye||''}"></div></div>
-      <label>Pièces rebutées — 2ème poste</label><input id="f_rebuts" type="number" min="0" value="${m.rebuts}">
+      <label>Pièces rebutées — 2ème poste</label><input id="f_rebuts" type="number" min="0" value="${m.rebuts}" oninput="updateT2Rate('${id}')">
       ${(m.moulesAvances&&m.moulesAvances.length)?`<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--ink);">
         <div style="font-weight:700;font-size:14px;">2ème moule — production de la 2ème tournée</div>
         <div style="font-size:12px;color:var(--grey);margin-top:3px;">Zone dédiée sous le moule principal.</div>
@@ -845,7 +1184,65 @@ function renderTourneeStep(){
       <label>Causes d'arrêt</label><div id="arretsList"></div><button type="button" class="btn-secondary" onclick="addArretRow()">+ Ajouter une cause</button>`;
     renderArretsList();
     renderAdvancedT2(id);
+    updateT2Rate(id);
   }
+}
+
+// Calcule et affiche la cadence de production (moule principal) sur une base de 7h30,
+// en tenant compte du temps d'arrêt déjà saisi. Se met à jour en direct.
+function updateT2Rate(id){
+  const el = document.getElementById('t2RateDisplay');
+  if(!el) return;
+  const day = ensureToday(), m = day.machines[id];
+  const production = parseFloat(document.getElementById('f_production') ? document.getElementById('f_production').value : m.production) || 0;
+  const rebuts = parseFloat(document.getElementById('f_rebuts') ? document.getElementById('f_rebuts').value : m.rebuts) || 0;
+  const moule = refs.moules.find(x => x.id === m.mouleId);
+  const cycle = parseFloat(m.cycle);
+  const piecesParMoule = moule ? parseFloat(moule.piecesParMoule) : 0;
+  if(!moule || !cycle || cycle<=0 || !piecesParMoule){
+    el.innerHTML = '<span style="font-size:12px;color:var(--grey);">Taux de production : moule/cycle non renseigné en Tournée 1.</span>';
+    return;
+  }
+  const arretHeures = tempArrets.reduce((sum,a)=> sum + (parseFloat(a.duree)||0), 0);
+  const dispoSecondes = Math.max(0, (7.5*3600) - (arretHeures*3600));
+  const shotsTheoriques = Math.floor(dispoSecondes / cycle);
+  const productionTheorique = shotsTheoriques * piecesParMoule;
+  const productionReelle = production + rebuts;
+  const manque = Math.max(0, productionTheorique - productionReelle);
+  const tempsPerduHeures = (manque / piecesParMoule) * (cycle / 3600);
+  const tempsProductionHeures = (productionReelle / piecesParMoule) * (cycle / 3600);
+  const depassementHeures = Math.max(0, tempsProductionHeures - 8);
+  let color, valeur, note;
+  if(tempsProductionHeures > 8){
+    color = '#f59e0b';
+    valeur = depassementHeures;
+    note = `quantité saisie ⇒ ${tempsProductionHeures.toFixed(2)} h de production pour un shift de 8h`;
+  } else {
+    valeur = -tempsPerduHeures;
+    note = `théorique ${productionTheorique} pièces sur 7h30 − arrêts, rebuts inclus`;
+    if(arretHeures > tempsPerduHeures) color = '#f59e0b';
+    else if(tempsPerduHeures > 0.16) color = '#dc2626';
+    else color = '#16a34a';
+  }
+  const signe = valeur > 0 ? '+' : '';
+  el.innerHTML = `<div style="font-size:13px;">Temps perdu estimé : <b style="color:${color};">${signe}${valeur.toFixed(2)} h</b> <span style="color:var(--grey);font-size:11px;">(${note})</span></div>`;
+}
+
+// Quand l'État passe à "Arrêt total", pré-remplit automatiquement 8h de temps d'arrêt (en rouge)
+// jusqu'à ce qu'une cause soit choisie.
+function onStatutT1Change(id, value){
+  const day = ensureToday(), m = day.machines[id];
+  m.statut = value; saveDays();
+}
+function onStatutT2Change(id, value){
+  const day = ensureToday(), m = day.machines[id];
+  m.statut = value; saveDays();
+  if(value === 'arret_total'){
+    if(!tempArrets[0]) tempArrets[0] = {cause:'', duree:''};
+    tempArrets[0].duree = 8;
+  }
+  renderArretsList();
+  updateT2Rate(id);
 }
 function renderAdvancedT2(id){
   const el=document.getElementById('advancedT2List'); if(!el) return;
@@ -853,9 +1250,8 @@ function renderAdvancedT2(id){
   el.innerHTML=arr.map((ma,i)=>{
     const mo=mouleForId(ma.mouleId);
     return `<div style="padding:12px 0;border-top:1px solid var(--line);margin-top:8px;">
-      <div class="moule-lookup">
-        <div><label style="font-size:10px;">N° moule</label><input value="${mo?esc(mo.numero):''}" readonly></div>
-        <div><label style="font-size:10px;">Nom</label><input value="${mo?esc(mo.nom):''}" readonly></div>
+      <div class="moule-lookup" style="grid-template-columns:1.6fr 1fr;">
+        <div><label style="font-size:10px;">N° moule</label><input style="font-size:18px;font-weight:800;" value="${mo?esc(mo.numero):''}" readonly><div class="moule-name-sub">${mo?esc(mo.nom):''}</div></div>
         <div><label style="font-size:10px;">Pièces théoriques</label><input value="${mo?esc(mo.piecesParMoule):''}" readonly></div>
       </div>
       <div class="form-row">
@@ -893,10 +1289,9 @@ function renderAdvancedMoules(id){
         </select>
         <button class="btn-danger" onclick="removeAdvancedMoule('${id}',${i})">✕</button>
       </div>
-      <div class="moule-lookup" style="margin-top:8px;">
-        <div><label style="font-size:10px;">Nom</label><input value="${mo?esc(mo.nom):''}" readonly></div>
+      <div class="moule-lookup" style="margin-top:8px;grid-template-columns:1.6fr 1fr;">
+        <div><label style="font-size:10px;">N° moule</label><input style="font-size:18px;font-weight:800;" value="${mo?esc(mo.numero):''}" readonly><div class="moule-name-sub">${mo?esc(mo.nom):''}</div></div>
         <div><label style="font-size:10px;">Pièces théoriques</label><input value="${mo?esc(mo.piecesParMoule):''}" readonly></div>
-        <div><label style="font-size:10px;">N° moule</label><input value="${mo?esc(mo.numero):''}" readonly></div>
       </div>
       <div class="form-row">
         <div style="flex:1"><label style="font-size:10px;">Matière</label><select onchange="updateAdvancedMoule('${id}',${i},'matiere',this.value)"><option value="">—</option>${refs.materiaux.map(x=>`<option value="${esc(x)}" ${ma.matiere===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div>
@@ -938,7 +1333,18 @@ function updateMouleAssign(id, mouleId){
 }
 function renderArretsList(){
   const el = document.getElementById('arretsList');
-  el.innerHTML = tempArrets.map((a,i)=>`<div class="row" style="margin-top:8px;"><select style="flex:2;" onchange="tempArrets[${i}].cause=this.value"><option value="">Choisir une cause</option>${refs.causes.map(c => `<option value="${c}" ${a.cause===c?'selected':''}>${c}</option>`).join('')}</select><input type="number" placeholder="Min" value="${a.duree||''}" style="flex:0 0 64px;" oninput="tempArrets[${i}].duree=this.value"><button type="button" class="btn-danger" onclick="removeArretRow(${i})">✕</button></div>`).join('');
+  el.innerHTML = tempArrets.map((a,i)=>{
+    const missingCause = (parseFloat(a.duree)>0 && !a.cause);
+    const rowStyle = missingCause ? 'margin-top:8px;background:#fee2e2;border:1px solid #dc2626;border-radius:6px;padding:6px;' : 'margin-top:8px;';
+    return `<div class="row" style="${rowStyle}">
+      <select style="flex:0 0 78px;font-family:monospace;" onchange="tempArrets[${i}].cause=this.value; renderArretsList(); updateT2RateFromContext();"><option value="">—</option>${refs.causes.map(c => `<option value="${c}" ${a.cause===c?'selected':''}>${c}</option>`).join('')}</select>
+      <input type="number" step="0.1" min="0" placeholder="Heures (ex: 1.5)" value="${a.duree||''}" style="flex:1;" oninput="tempArrets[${i}].duree=this.value; updateT2RateFromContext();">
+      <button type="button" class="btn-danger" onclick="removeArretRow(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+function updateT2RateFromContext(){
+  if(currentTournee === 2) updateT2Rate(machineIds[currentIndex]);
 }
 function addArretRow(){ tempArrets.push({cause:'', duree:''}); renderArretsList(); }
 function removeArretRow(i){ tempArrets.splice(i,1); if(tempArrets.length===0) tempArrets.push({cause:'', duree:''}); renderArretsList(); }
@@ -964,16 +1370,54 @@ function saveCurrentStep(){
     m.sacs = document.getElementById('f_sacs').value;
     m.broye = document.getElementById('f_broye') ? document.getElementById('f_broye').value : '';
     m.rebuts = document.getElementById('f_rebuts').value;
-    m.statut = document.getElementById('f_statut').value;
+    m.statut = document.getElementById('f_statut_t2') ? document.getElementById('f_statut_t2').value : (m.statut || 'marche');
     m.arrets = tempArrets.filter(a => (a.cause && a.cause.trim()) || (a.duree && parseFloat(a.duree)>0));
   }
   saveDays();
 }
+function quitTournee(){
+  try{ saveCurrentStep(); }catch(e){ /* on quitte quand même même en cas d'erreur de sauvegarde */ }
+  showScreen('home');
+}
+function populateTourneeJump(){
+  const selA = document.getElementById('tourneeJumpAtelier');
+  if(!selA) return;
+  const ateliers = [];
+  machineIds.forEach(id=>{
+    const at = config[id].atelier;
+    if(!ateliers.includes(at)) ateliers.push(at);
+  });
+  ateliers.sort((a,b)=>Number(a)-Number(b));
+  selA.innerHTML = ateliers.map(at=>`<option value="${esc(String(at))}">Atelier ${esc(String(at))}</option>`).join('');
+  selA.value = config[machineIds[currentIndex]].atelier;
+}
+function onJumpAtelierChange(){
+  const atelier = document.getElementById('tourneeJumpAtelier').value;
+  const idx = machineIds.findIndex(id => String(config[id].atelier) === String(atelier));
+  if(idx >= 0) jumpTournee(idx);
+}
+function jumpTournee(idx){
+  try{
+    saveCurrentStep();
+    currentIndex = parseInt(idx, 10) || 0;
+    renderTourneeStep();
+  }catch(e){
+    alert('Erreur navigation tournée : ' + (e && e.message ? e.message : e));
+  }
+}
 function stepTournee(dir){
-  saveCurrentStep(); currentIndex += dir;
-  if(currentIndex < 0) currentIndex = 0;
-  if(currentIndex >= machineIds.length){ showScreen(currentTournee === 1 ? 'moules' : 'home'); return; }
-  renderTourneeStep();
+  try{
+    saveCurrentStep();
+    currentIndex += dir;
+    if(currentIndex < 0) currentIndex = 0;
+    if(currentIndex >= machineIds.length){
+      if(currentTournee === 1){ showScreen('effectif'); } else { showScreen('home'); }
+      return;
+    }
+    renderTourneeStep();
+  }catch(e){
+    alert('Erreur navigation tournée : ' + (e && e.message ? e.message : e));
+  }
 }
 
 function renderResumeScreen(){
@@ -990,11 +1434,7 @@ function renderResume(){
   let totalMachinesActives = 0;
   const orderedMachines = [...machineIds].sort((a,b)=>{
     const ca=config[a]||{}, cb=config[b]||{};
-    if(Number(ca.atelier||0)!==Number(cb.atelier||0)) return Number(ca.atelier||0)-Number(cb.atelier||0);
-    const na=String(ca.num||ca.numero||a), nb=String(cb.num||cb.numero||b);
-    const la=(typeof MACHINES_PAR_ATELIER!=='undefined'&&MACHINES_PAR_ATELIER[ca.atelier]) ? MACHINES_PAR_ATELIER[ca.atelier].indexOf(na) : -1;
-    const lb=(typeof MACHINES_PAR_ATELIER!=='undefined'&&MACHINES_PAR_ATELIER[cb.atelier]) ? MACHINES_PAR_ATELIER[cb.atelier].indexOf(nb) : -1;
-    return (la<0?9999:la)-(lb<0?9999:lb);
+    return Number(ca.atelier||0)-Number(cb.atelier||0);
   });
 
   function getMouldRows(m){
@@ -1023,17 +1463,52 @@ function renderResume(){
     <button type="button" class="btn-primary" onclick="showResumePart('resumeMoules')">📋 Moules + couleurs</button>
     <button type="button" class="btn-secondary" onclick="showResumePart('resumeAteliers')">🏭 Ateliers : machines + ouvriers</button>
   </div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px 14px;font-size:11px;color:#666;margin:4px 0 10px;">
+    <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#dc2626;margin-right:4px;"></i>Arrêt total</span>
+    <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f59e0b;margin-right:4px;"></i>Moule + cycle manquants</span>
+    <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#eab308;margin-right:4px;"></i>Cycle manquant</span>
+    <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563eb;margin-right:4px;"></i>Opérateur manquant</span>
+    <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#16a34a;margin-right:4px;"></i>Tout est renseigné</span>
+  </div>
   <div id="resumeMoules" class="resume-part">
     <div class="card"><h2>Tournée 1 — Moules par machine</h2>`;
 
   Object.keys(parAtelier).sort((a,b)=>Number(a)-Number(b)).forEach(at=>{
     html+=`<h3 style="margin:16px 0 6px">Atelier ${esc(at)}</h3>`;
     parAtelier[at].rows.forEach(r=>{
-      const noMoule=r.mouldRows.length===0;
-      const cycleMissing=!noMoule && r.mouldRows.some(x=>!x.cycle);
-      const dot=noMoule
-        ? '<span title="Aucun moule" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dc2626;margin-right:5px;vertical-align:middle"></span>'
-        : (cycleMissing ? '<span title="Cycle manquant" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b;margin-right:5px;vertical-align:middle"></span>' : '');
+      /*
+       * Indicateur de conformité — Tournée 1
+       * Priorité :
+       * 1) Arrêt total  -> rouge
+       * 2) En marche + aucun moule ET aucun cycle -> orange
+       * 3) En marche + moule renseigné MAIS cycle absent -> jaune
+       * 4) En marche + moule + cycle renseignés MAIS opérateur absent -> bleu
+       */
+      const noMoule = r.mouldRows.length === 0;
+      const cycleMissing = noMoule
+        ? true
+        : r.mouldRows.some(x => !String(x.cycle || '').trim());
+      const operatorMissing = !String(r.m.operateur || '').trim();
+
+      let dot = '';
+      let dotTitle = '';
+
+      if (r.m.statut === 'arret_total') {
+        dot = '<span title="Arrêt total" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dc2626;margin-right:5px;vertical-align:middle"></span>';
+        dotTitle = 'Arrêt total';
+      } else if (noMoule && cycleMissing) {
+        dot = '<span title="En marche — moule et cycle manquants" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b;margin-right:5px;vertical-align:middle"></span>';
+        dotTitle = 'Moule et cycle manquants';
+      } else if (!noMoule && cycleMissing) {
+        dot = '<span title="En marche — cycle manquant" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#eab308;margin-right:5px;vertical-align:middle"></span>';
+        dotTitle = 'Cycle manquant';
+      } else if (!noMoule && !cycleMissing && operatorMissing) {
+        dot = '<span title="En marche — opérateur manquant" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2563eb;margin-right:5px;vertical-align:middle"></span>';
+        dotTitle = 'Opérateur manquant';
+      } else if (!noMoule && !cycleMissing && !operatorMissing) {
+        dot = '<span title="En marche — tout est renseigné" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#16a34a;margin-right:5px;vertical-align:middle"></span>';
+        dotTitle = 'Tout est renseigné';
+      }
       const moulds=noMoule
         ? '<span style="color:#777">Aucun moule</span>'
         : r.mouldRows.map(x=>{
@@ -1053,7 +1528,11 @@ function renderResume(){
     const a=parAtelier[at];
     html+=`<div class="atelier-summary"><h3>Atelier ${esc(at)}</h3><div>Machines en fonctionnement : <b>${a.machines}</b></div><div>Ouvriers : <b>${a.ouvriers.size}</b></div></div>`;
   });
-  html+=`<div class="atelier-summary total"><h3>Total</h3><div>Machines en fonctionnement : <b>${totalMachinesActives}</b></div><div>Ouvriers uniques : <b>${ouvriersJour.size}</b></div></div></div></div>`;
+  html+=`<div class="atelier-summary total"><h3>Total</h3><div>Machines en fonctionnement : <b>${totalMachinesActives}</b></div><div>Ouvriers uniques : <b>${ouvriersJour.size}</b></div></div>`;
+  if(day.effectif && (day.effectif.total || day.effectif.presents)){
+    html+=`<div class="atelier-summary"><h3>Effectif du poste</h3><div>Total ouvriers : <b>${esc(String(day.effectif.total||0))}</b></div><div>Présents : <b>${esc(String(day.effectif.presents||0))}</b></div><div>Absents : <b>${esc(String(day.effectif.absents||0))}</b></div></div>`;
+  }
+  html+=`</div></div>`;
   content.innerHTML=html;
 }
 function showResumePart(id){
@@ -1064,16 +1543,34 @@ function exportExcel(){
   const dateKey=document.getElementById('resumeDateSelect')&&document.getElementById('resumeDateSelect').value?document.getElementById('resumeDateSelect').value:todayStr();
   const day=days[dateKey]||ensureToday();
   const rows=machineIds.map(id=>{
-    const c=config[id],m=day.machines[id],moule=refs.moules.find(x=>x.id===m.mouleId),couleur=refs.couleurs.find(x=>x.id===(m.couleur||c.couleur));
-    const moulesAvancesStr=(m.moulesAvances||[]).filter(ma=>ma.mouleId).map(ma=>{const mo=refs.moules.find(x=>x.id===ma.mouleId);return mo?`${mo.numero} (${ma.pieces||0}p)`:'';}).filter(x=>x).join('; ');
-    return {Date:formatDateShort(day.date),Shift:day.shift,Atelier:c.atelier,Machine:c.num,Moule:moule?moule.numero:'',MouleNom:moule?moule.nom:'',PiecesTheoriques:moule?moule.piecesParMoule:'',PiecesReelles:moule?moule.piecesReelles:'',MoulesAvances:moulesAvancesStr,CouleurMoule:couleur?couleur.nom:'',ProductionMoule2:(m.moulesAvances||[]).map(x=>x.production||'').join('; '),SacsMoule2:(m.moulesAvances||[]).map(x=>x.sacs||'').join('; '),BroyeMoule2:(m.moulesAvances||[]).map(x=>x.broye||'').join('; '),RebutsMoule2:(m.moulesAvances||[]).map(x=>x.rebuts||'').join('; '),TempsArretMoule2:(m.moulesAvances||[]).map(x=>x.arret||'').join('; '),TypeArretMoule2:(m.moulesAvances||[]).map(x=>x.cause||'').join('; '),Operateur:m.operateur,Cycle:m.cycle,Matiere:m.matiere,Production:m.production,SacsMatiere:m.sacs,MatiereBroyee:m.broye||'',Rebuts:m.rebuts,Etat:m.statut==='arret_total'?'Arrêt total':'Marche',TempsArret:(m.arrets||[]).reduce((s,a)=>s+(parseFloat(a.duree)||0),0),CausesArret:(m.arrets||[]).filter(a=>a.cause).map(a=>a.cause+(a.duree?` (${a.duree}min)`:'')).join('; ')};
+    const c=config[id]||{},m=day.machines[id]||{},moule=refs.moules.find(x=>x.id===m.mouleId),couleur=refs.couleurs.find(x=>x.id===(m.couleur||c.couleur));
+    const moulesAvancesStr=(m.moulesAvances||[]).filter(ma=>ma.mouleId).map(ma=>{const mo=refs.moules.find(x=>x.id===ma.mouleId);return mo?`${mo.numero} (${ma.pieces||0}p)`:'';}).filter(Boolean).join('; ');
+    return {Date:formatDateShort(day.date),Shift:day.shift||'',Atelier:c.atelier||'',Machine:c.num||'',Moule:moule?moule.numero:'',MouleNom:moule?moule.nom:'',PiecesTheoriques:moule?moule.piecesParMoule:'',PiecesReelles:moule?moule.piecesReelles:'',MoulesAvances:moulesAvancesStr,CouleurMoule:couleur?couleur.nom:'',ProductionMoule2:(m.moulesAvances||[]).map(x=>x.production||'').join('; '),SacsMoule2:(m.moulesAvances||[]).map(x=>x.sacs||'').join('; '),BroyeMoule2:(m.moulesAvances||[]).map(x=>x.broye||'').join('; '),RebutsMoule2:(m.moulesAvances||[]).map(x=>x.rebuts||'').join('; '),TempsArretMoule2:(m.moulesAvances||[]).map(x=>x.arret||'').join('; '),TypeArretMoule2:(m.moulesAvances||[]).map(x=>x.cause||'').join('; '),Operateur:m.operateur||'',Cycle:m.cycle||'',Matiere:m.matiere||'',Production:m.production||'',SacsMatiere:m.sacs||'',MatiereBroyee:m.broye||'',Rebuts:m.rebuts||'',Etat:m.statut==='arret_total'?'Arrêt total':'Marche',TempsArret:(m.arrets||[]).reduce((sum,a)=>sum+(parseFloat(a.duree)||0),0),CausesArret:(m.arrets||[]).filter(a=>a.cause).map(a=>a.cause+(a.duree?` (${a.duree}h)`:'')).join('; ')};
   });
-  const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Tournee');
-  XLSX.writeFile(wb,'tournee_'+day.date+'.xlsx');
+
+  // Export en véritable classeur .xlsx (format Excel natif, pas un tableau HTML déguisé).
+  const headers=Object.keys(rows[0]||{Date:'Date'});
+  const ws=XLSX.utils.json_to_sheet(rows,{header:headers});
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Tournée');
+  const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  const blob=new Blob([wbout],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const filename=`tournee_${day.date}.xlsx`;
+  saveOrShareBlob(blob, filename, blob.type);
 }
 
 renderHome();
 </script>
-</body>
+<script id="android-app-behavior">(function(){document.addEventListener('contextmenu',function(e){if(!e.target.closest('input, textarea, select, [contenteditable="true"]'))e.preventDefault()});document.addEventListener('dragstart',function(e){e.preventDefault()});
+// Fallback anti-rebond pour WebView Android plus anciennes : bloque uniquement le "rebond" aux limites de la page, sans bloquer le défilement normal.
+var startY=0;
+document.addEventListener('touchstart',function(e){ startY = e.touches[0].clientY; }, {passive:true});
+document.addEventListener('touchmove',function(e){
+  var atTop = window.scrollY <= 0;
+  var atBottom = (window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 1;
+  var movingDown = e.touches[0].clientY > startY;
+  var movingUp = e.touches[0].clientY < startY;
+  if((atTop && movingDown) || (atBottom && movingUp)){ e.preventDefault(); }
+}, {passive:false});
+})();</script></body>
 </html>
