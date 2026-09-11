@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Tournée Injection</title>
+<style>
+  :root{
+    --ink:#111111;
+    --paper:#ffffff;
+    --red:#D2232A;
+    --grey:#767676;
+    --line:#D9D9D8;
+    --pale:#F4F4F3;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:var(--paper); color:var(--ink); }
+  body{
+    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size:16px; line-height:1.4;
+    font-variant-numeric: tabular-nums;
+  }
+  .top-bar{ height:4px; background:var(--red); width:100%; }
+  .screen{ display:none; max-width:560px; margin:0 auto; padding:0 20px 32px; }
+  .screen.active{ display:block; }
+  .eyebrow{ font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--grey); font-weight:600; margin-top:22px; }
+  .title{ font-size:26px; font-weight:800; letter-spacing:-.01em; margin:2px 0 0; }
+  .subtitle{ font-size:14px; color:var(--grey); margin-top:4px; }
+  .date-shift-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; }
+  .date-display{ font-size:15px; font-weight:700; letter-spacing:.01em; color:var(--ink); white-space:nowrap; }
+  .segmented-compact{ display:flex; flex:0 1 auto; border:1px solid var(--ink); }
+  .segmented-compact button{ padding:6px 8px; background:var(--paper); color:var(--ink); border:none; border-right:1px solid var(--ink); font-size:11px; font-weight:700; letter-spacing:.02em; font-family:inherit; cursor:pointer; white-space:nowrap; }
+  .segmented-compact button:last-child{ border-right:none; }
+  .segmented-compact button.active{ background:var(--ink); color:var(--paper); }
+  .rule{ border:none; border-top:1px solid var(--ink); margin:20px 0; }
+  .rule-light{ border:none; border-top:1px solid var(--line); margin:0; }
+  label{ display:block; font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:var(--grey); margin-top:16px; }
+  input, select, textarea{ width:100%; border:none; border-bottom:1px solid var(--line); background:transparent; font-family:inherit; font-size:16px; color:var(--ink); padding:8px 0 6px; border-radius:0; margin-top:2px; }
+  input:focus, select:focus, textarea:focus{ outline:none; border-bottom:1px solid var(--ink); }
+  select{ -webkit-appearance:none; appearance:none; background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23767676' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat:no-repeat; background-position:right 4px center; background-size:16px; padding-right:24px; }
+  button{ font-family:inherit; cursor:pointer; border-radius:0; font-size:15px; font-weight:600; }
+  .nav-row{ display:flex; align-items:center; justify-content:space-between; width:100%; background:none; border:none; border-top:1px solid var(--line); padding:18px 0; text-align:left; color:var(--ink); }
+  .nav-list{ border-bottom:1px solid var(--line); }
+  .nav-row .idx{ color:var(--grey); font-weight:400; margin-right:14px; }
+  .nav-row .lbl{ flex:1; font-weight:600; }
+  .nav-row .chev{ color:var(--grey); }
+  .nav-row.accent .lbl{ color:var(--red); }
+  .segmented{ display:flex; margin-top:6px; }
+  .segmented button{ flex:1; padding:12px 6px; background:var(--paper); color:var(--ink); border:1px solid var(--ink); border-left:none; font-size:14px; }
+  .segmented button:first-child{ border-left:1px solid var(--ink); }
+  .segmented button.active{ background:var(--ink); color:var(--paper); }
+  .btn-primary, .btn-secondary, .btn-quiet{ display:block; width:100%; padding:16px; margin-top:10px; text-align:center; }
+  .btn-primary{ background:var(--red); color:var(--paper); border:1px solid var(--red); }
+  .btn-secondary{ background:var(--paper); color:var(--ink); border:1px solid var(--ink); }
+  .btn-quiet{ background:none; color:var(--grey); border:none; text-decoration:underline; }
+  .btn-row{ display:flex; gap:0; margin-top:10px; }
+  .btn-row .btn-secondary{ border-right:none; }
+  .btn-row .btn-primary{ border:1px solid var(--red); }
+  .btn-main{ display:block; width:100%; padding:16px; margin-top:10px; background:var(--red); color:var(--paper); border:1px solid var(--red); text-align:center; }
+  .btn-sec{ display:block; width:100%; padding:16px; margin-top:10px; background:var(--paper); color:var(--ink); border:1px solid var(--ink); text-align:center; }
+  .btn-danger{ display:block; width:100%; padding:14px; margin-top:10px; background:none; color:var(--red); border:1px solid var(--red); text-align:center; }
+  .row{ display:flex; gap:10px; align-items:center; }
+  .row > *{ flex:1; }
+  .row button.btn-danger{ flex:0 0 40px; padding:8px; margin:0; }
+  .card{ padding:16px 0; border-top:1px solid var(--line); }
+  .card:first-of-type{ border-top:none; }
+  h2{ font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; margin:0 0 6px; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+  th, td{ padding:8px 4px; text-align:left; border-bottom:1px solid var(--line); }
+  th{ font-size:11px; text-transform:uppercase; letter-spacing:.03em; color:var(--grey); font-weight:600; }
+  td:not(:first-child), th:not(:first-child){ text-align:right; }
+  tr:last-child td, tr:last-child th{ border-bottom:none; }
+  tfoot td, tfoot th{ border-top:2px solid var(--ink); border-bottom:none; font-weight:700; }
+  .stat-block{ font-size:13px; margin:8px 0 4px; line-height:1.9; }
+  .stat-block b{ font-weight:700; }
+  .tag{ display:inline-block; padding:2px 8px; font-size:11px; font-weight:700; text-transform:uppercase; border:1px solid currentColor; }
+  .badge{ display:inline-block; padding:2px 8px; font-size:11px; font-weight:700; text-transform:uppercase; border:1px solid currentColor; background:none; border-radius:0; }
+  .badge-on{ color:var(--ink); }
+  .badge-off{ color:var(--red); }
+  .progress{ display:flex; justify-content:space-between; align-items:baseline; font-size:12px; text-transform:uppercase; letter-spacing:.03em; color:var(--grey); margin:20px 0 0; }
+  .progress b{ color:var(--ink); font-size:14px; }
+  .hero{ font-size:64px; font-weight:800; line-height:1; letter-spacing:-.02em; margin:6px 0 4px; }
+  .hero-meta{ font-size:13px; color:var(--grey); margin-bottom:4px; }
+  .moule-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-top:1px solid var(--line); gap:12px; }
+  .moule-info{ display:flex; flex-direction:column; }
+  .moule-info b{ font-size:15px; }
+  .moule-info span{ font-size:12px; color:var(--grey); margin-top:2px; }
+  .swatches{ display:flex; gap:6px; flex:0 0 auto; }
+  .swatch{ width:26px; height:26px; border:1px solid var(--ink); padding:0; background:var(--paper); }
+  .swatch.active{ border-width:3px; }
+  .swatch-none{ font-size:11px; color:var(--grey); background:var(--paper); }
+  .color-type-row{ display:flex; align-items:center; gap:10px; padding:12px 0; border-top:1px solid var(--line); }
+  .color-type-row input[type="text"]{ flex:1; }
+  .color-type-row .btn-danger{ flex:0 0 40px; margin:0; padding:8px; }
+  .param-tabs{ display:flex; gap:0; margin-top:16px; flex-wrap:wrap; }
+  .param-tabs button{ flex:1; min-width:80px; padding:10px 4px; background:var(--paper); color:var(--ink); border:1px solid var(--ink); border-left:none; font-size:12px; text-transform:uppercase; letter-spacing:.03em; }
+  .param-tabs button:first-child{ border-left:1px solid var(--ink); }
+  .param-tabs button.active{ background:var(--ink); color:var(--paper); }
+  .param-list{ margin-top:12px; }
+  .param-item{ display:flex; gap:8px; align-items:center; padding:10px 0; border-top:1px solid var(--line); }
+  .param-item:first-child{ border-top:none; }
+  .param-item .info{ flex:1; }
+  .param-item .info b{ font-size:14px; display:block; }
+  .param-item .info span{ font-size:12px; color:var(--grey); display:block; margin-top:2px; }
+  .param-item .swatch{ flex:0 0 24px; width:24px; height:24px; }
+  .param-item .btn-danger{ flex:0 0 36px; padding:6px; margin:0; font-size:14px; }
+  .form-row{ display:flex; gap:8px; margin-top:10px; align-items:flex-end; }
+  .form-row input, .form-row select{ flex:1; margin-top:0; }
+  .form-row button{ flex:0 0 auto; padding:8px 16px; margin:0; }
+  .hidden-section{ margin-top:30px; padding-top:20px; border-top:1px dashed var(--line); }
+  .hidden-toggle{ background:none; border:none; color:var(--grey); font-size:11px; text-decoration:underline; cursor:pointer; padding:0; margin:0; text-transform:uppercase; letter-spacing:.03em; }
+  .hidden-content{ display:none; margin-top:10px; padding:12px; background:var(--pale); border:1px solid var(--line); }
+  .hidden-content.show{ display:block; }
+  .advanced-moule-row{ display:flex; flex-direction:column; gap:6px; padding:10px; margin-top:8px; background:var(--pale); border:1px solid var(--line); }
+  .advanced-moule-row .form-row{ margin-top:0; }
+  .advanced-moule-row button.btn-danger{ margin-top:6px; }
+  .modal-overlay{ position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; z-index:1000; padding:20px; }
+  .modal-overlay.show{ display:flex; }
+  .modal{ background:var(--paper); max-width:400px; width:100%; padding:24px; border:1px solid var(--ink); }
+  .modal h3{ margin:0 0 16px; font-size:18px; }
+  .data-access{
+    margin-top:34px; text-align:center;
+  }
+  .data-toggle{
+    background:none; border:none; color:#999; font-size:11px; text-decoration:underline;
+    text-transform:uppercase; letter-spacing:.04em; padding:6px 10px;
+  }
+  .data-panel{ display:none; margin-top:8px; padding:10px 0; }
+  .data-panel.show{ display:block; }
+  .data-panel button{
+    width:100%; padding:12px; background:var(--paper); color:var(--ink);
+    border:1px solid var(--line); font-size:13px;
+  }
+  .setup-inline{
+    display:grid; grid-template-columns:minmax(0,1.35fr) minmax(72px,.75fr) 42px;
+    gap:10px; align-items:end; margin-top:8px;
+  }
+  .setup-inline label{ margin-top:0; }
+  .color-pick-btn{
+    width:40px; height:40px; padding:0; border:1px solid var(--ink);
+    background:var(--paper); position:relative; display:block;
+  }
+  .color-pick-dot{
+    position:absolute; inset:7px; border:1px solid var(--ink);
+  }
+.color-select{ width:100%; }
+  .modal .btn-row{ margin-top:16px; }
+  .moule-db-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; align-items:center; width:100%; }
+  .moule-db-grid .db-head{ font-size:10px; color:var(--grey); text-transform:uppercase; letter-spacing:.04em; }
+  .moule-db-grid input{ width:100%; box-sizing:border-box; margin:0; padding:8px; }
+  .moule-lookup{ display:grid; grid-template-columns:1fr 1.4fr 1fr; gap:8px; align-items:end; }
+  .moule-lookup > div{ min-width:0; }
+  .moule-lookup input{ margin-top:0; }
+  .moule-lookup input[readonly]{ background:var(--pale); }
+  @media(max-width:420px){ .moule-db-grid,.moule-lookup{ grid-template-columns:.9fr 1.25fr 1fr; gap:5px; } }
+
+
+.resume-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.resume-buttons button{flex:1;min-width:150px}.resume-moule-list{display:flex;flex-direction:column;gap:6px}.resume-moule-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px}.resume-moule-row span{font-weight:600}.atelier-summary{padding:12px 0;border-bottom:1px solid var(--line)}.atelier-summary h3{margin:0 0 6px}.atelier-summary.total{border-bottom:0;margin-top:8px;padding-top:16px;font-size:15px}
+  .moule-suggestions{position:absolute;left:0;right:0;top:100%;z-index:1000;background:#fff;border:1px solid #bbb;border-top:0;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;box-shadow:0 5px 14px rgba(0,0,0,.12);display:none;}
+  .moule-suggestion{padding:10px 12px;border-top:1px solid #eee;cursor:pointer;font-size:13px;}
+  .moule-suggestion:hover,.moule-suggestion:active{background:#f2f2f2;}
+  .moule-suggestion b{margin-right:8px;}
+</style>
+</head>
+<body>
+<div class="top-bar"></div>
+
+<div id="home" class="screen active">
+  <div class="eyebrow">Injection</div>
+  <div class="title">Tournée de production</div>
+  <div class="date-shift-row">
+    <div style="display:flex;align-items:center;gap:8px;flex:1"><label for="homeDateInput" style="margin:0;font-size:11px;color:var(--grey);text-transform:uppercase;">Date</label><input id="homeDateInput" type="date" style="width:145px;padding:8px 9px;font-size:14px;" onchange="setSelectedDate(this.value)"></div>
+    <div class="segmented-compact" id="shiftSegment">
+      <button onclick="setShift('07H-15H')" data-v="07H-15H">07H-15H</button>
+      <button onclick="setShift('15H-23H')" data-v="15H-23H">15H-23H</button>
+      <button onclick="setShift('23H-07H')" data-v="23H-07H">23H-07H</button>
+    </div>
+  </div>
+  <hr class="rule">
+  <div class="nav-list">
+    <button class="nav-row" onclick="startTournee(1)"><span class="idx">01</span><span class="lbl">Tournée — Setup</span><span class="chev">›</span></button>
+    <button class="nav-row" onclick="startTournee(2)"><span class="idx">02</span><span class="lbl">Tournée — Production</span><span class="chev">›</span></button>
+  </div>
+  <hr class="rule">
+  <div class="nav-list">
+    <button class="nav-row" onclick="showScreen('resume')"><span class="lbl">Résumé du jour</span><span class="chev">›</span></button>
+    <button class="nav-row" onclick="exportExcel()"><span class="lbl">Exporter Excel</span><span class="chev">›</span></button>
+  </div>
+  <div class="data-access">
+    <button class="data-toggle" type="button" onclick="openReferenceData()">••• Données de référence</button>
+  </div>
+</div>
+
+<div id="parametres" class="screen">
+  <div class="eyebrow">Configuration</div>
+  <div class="title">Paramètres généraux</div>
+  <div class="subtitle">Gérez toutes les données de référence</div>
+  <div class="param-tabs" id="paramTabs">
+    <button onclick="showParamTab('operateurs')" class="active" data-tab="operateurs">Opérateurs</button>
+    <button onclick="showParamTab('moules')" data-tab="moules">Moules</button>
+    <button onclick="showParamTab('machines')" data-tab="machines">Machines</button>
+    <button onclick="showParamTab('couleurs')" data-tab="couleurs">Couleurs</button>
+    <button onclick="showParamTab('causes')" data-tab="causes">Arrêts</button>
+    <button onclick="showParamTab('materiaux')" data-tab="materiaux">Matières</button>
+  </div>
+  <div id="paramContent"></div>
+  <button class="btn-quiet" onclick="showScreen('home')">‹ Retour</button>
+</div>
+
+<div id="moules" class="screen">
+  <div class="eyebrow">Tournée 1 — terminée</div>
+  <div class="title">Repérage des moules</div>
+  <div class="subtitle">Touchez une couleur pour marquer un moule</div>
+  <div id="moulesList"></div>
+  <button class="btn-primary" onclick="showScreen('home')">Terminer</button>
+</div>
+
+<div id="tournee" class="screen">
+  <div class="progress" id="tourneeProgress"></div>
+  <div id="tourneeCard"></div>
+  <div class="btn-row">
+    <button class="btn-secondary" style="margin-top:0;" onclick="stepTournee(-1)">‹ Précédent</button>
+    <button class="btn-primary" style="margin-top:0;" onclick="stepTournee(1)">Suivant ›</button>
+  </div>
+  <button class="btn-quiet" onclick="showScreen('home')">Quitter la tournée</button>
+</div>
+
+<div id="resume" class="screen">
+  <div class="eyebrow">Résumé</div>
+  <div class="title" id="resumeTitle">Journée</div>
+  <label>Date</label>
+  <select id="resumeDateSelect" onchange="renderResume()"></select>
+  <div id="resumeContent"></div>
+  <button class="btn-quiet" onclick="showScreen('home')">‹ Retour</button>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+/* ===== Résumé v20 : état déduit automatiquement des moules/cycles ===== */
+function resumeMachineStatus(machine){
+  const cfg = (typeof config !== 'undefined' && config && config.machines) ? config.machines[machine.id] || {} : {};
+  const moulds = [];
+  if (cfg.mouleId || cfg.moule || cfg.moule1) moulds.push(cfg.mouleId || cfg.moule || cfg.moule1);
+  if (cfg.mouleId2 || cfg.moule2) moulds.push(cfg.mouleId2 || cfg.moule2);
+
+  const unique = [...new Set(moulds.filter(Boolean).map(String))];
+  const cycles = [];
+  if (cfg.cycle !== undefined && cfg.cycle !== null && String(cfg.cycle).trim() !== '') cycles.push(cfg.cycle);
+  if (cfg.cycle2 !== undefined && cfg.cycle2 !== null && String(cfg.cycle2).trim() !== '') cycles.push(cfg.cycle2);
+
+  const noMould = unique.length === 0;
+  const noCycle = !noMould && cycles.length < unique.length;
+
+  return { moulds: unique, noMould, noCycle };
+}
+
+function renderResumeMachineLine(machine){
+  const s = resumeMachineStatus(machine);
+  const dot = s.noMould
+    ? '<span title="Aucun moule" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dc2626;margin-right:5px;vertical-align:middle"></span>'
+    : (s.noCycle
+      ? '<span title="Cycle manquant" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b;margin-right:5px;vertical-align:middle"></span>'
+      : '');
+
+  const mouldText = s.moulds.length
+    ? s.moulds.map((id, i) =>
+        `<span style="display:inline-block;margin-left:${i ? 10 : 0}px;padding:3px 8px;border:1px solid #ddd;border-radius:8px">${escapeHtml(String(id))}</span>`
+      ).join('')
+    : '<span style="color:#777">Aucun moule</span>';
+
+  return `<div class="resume-machine-line" style="display:flex;align-items:center;gap:4px;padding:7px 4px;border-bottom:1px solid #eee">
+    <span style="min-width:95px;font-weight:700;white-space:nowrap">${dot}${escapeHtml(String(machine.numero || machine.num || machine.id))}</span>
+    <span style="display:flex;align-items:center;flex-wrap:wrap">${mouldText}</span>
+  </div>`;
+}
+
+function renderResumeMachinesV20(){
+  const list = (typeof REAL_MACHINES !== 'undefined' && Array.isArray(REAL_MACHINES))
+    ? REAL_MACHINES
+    : ((typeof refs !== 'undefined' && refs.machines) ? refs.machines : []);
+  const ordered = [...list].sort((a,b) => {
+    const aa = Number(a.atelier || 0), bb = Number(b.atelier || 0);
+    if (aa !== bb) return aa - bb;
+    const ia = (typeof MACHINES_PAR_ATELIER !== 'undefined' && MACHINES_PAR_ATELIER[aa])
+      ? MACHINES_PAR_ATELIER[aa].indexOf(String(a.numero || a.num)) : 9999;
+    const ib = (typeof MACHINES_PAR_ATELIER !== 'undefined' && MACHINES_PAR_ATELIER[bb])
+      ? MACHINES_PAR_ATELIER[bb].indexOf(String(b.numero || b.num)) : 9999;
+    return ia - ib;
+  });
+  let html = '';
+  let current = null;
+  for (const m of ordered){
+    if (m.atelier !== current){
+      current = m.atelier;
+      html += `<h3 style="margin:16px 0 6px">Atelier ${current}</h3>`;
+    }
+    html += renderResumeMachineLine(m);
+  }
+  return html || '<p>Aucune machine.</p>';
+}
+
+</script>
+<script>
+const CONFIG_KEY = 'injApp_config';
+const DAYS_KEY = 'injApp_days';
+const REFS_KEY = 'injApp_refs';
+const ATELIERS_COUNT = 4;
+const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+
+function pad(n){ return n.toString().padStart(2,'0'); }
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+}
+function formatDateShort(dateStr){
+  const [y,m,d] = dateStr.split('-');
+  return d + '.' + m + '.' + y;
+}
+function formatDateSwiss(dateStr){
+  const [y,m,d] = dateStr.split('-');
+  const jour = JOURS[new Date(dateStr+'T00:00:00').getDay()];
+  return jour + ' ' + d + '.' + m + '.' + y;
+}
+function generateId(prefix){
+  return prefix + '_' + Date.now() + '_' + Math.random().toString(36).substr(2,5);
+}
+
+const SYNC_MODE = 'local';
+const DataStore = {
+  getConfig(){ if(SYNC_MODE === 'local') return JSON.parse(localStorage.getItem(CONFIG_KEY) || 'null'); },
+  saveConfig(c){ if(SYNC_MODE === 'local') localStorage.setItem(CONFIG_KEY, JSON.stringify(c)); },
+  getDays(){ if(SYNC_MODE === 'local') return JSON.parse(localStorage.getItem(DAYS_KEY) || '{}'); },
+  saveDays(d){ if(SYNC_MODE === 'local') localStorage.setItem(DAYS_KEY, JSON.stringify(d)); },
+  getRefs(){ if(SYNC_MODE === 'local') return JSON.parse(localStorage.getItem(REFS_KEY) || 'null'); },
+  saveRefs(r){ if(SYNC_MODE === 'local') localStorage.setItem(REFS_KEY, JSON.stringify(r)); }
+};
+
+let refs = DataStore.getRefs();
+if(!refs){
+  refs = {
+    operateurs: ['Ahmed', 'Mohamed', 'Karim', 'Samir', 'Youssef'],
+    moules: [
+      {id:generateId('m'), numero:'M001', nom:'Moule A', piecesParMoule:8, machineIds:[]},
+      {id:generateId('m'), numero:'M002', nom:'Moule B', piecesParMoule:6, machineIds:[]},
+      {id:generateId('m'), numero:'M003', nom:'Moule C', piecesParMoule:4, machineIds:[]}
+    ],
+    machines: [],
+    couleurs: [
+      {id:'rouge', nom:'Rouge', hex:'#D2232A'},
+      {id:'jaune', nom:'Jaune', hex:'#E8A33D'},
+      {id:'vert', nom:'Vert', hex:'#1B7A43'},
+      {id:'bleu', nom:'Bleu', hex:'#2A5DB0'}
+    ],
+    causes: ['Panne machine', 'Changement de moule', 'Manque matière', 'Problème qualité', 'Maintenance', 'Autre'],
+    materiaux: ['Matière standard']
+  };
+  DataStore.saveRefs(refs);
+}
+
+// Données de travail (déclarées avant la migration pour éviter une erreur JavaScript).
+let config = DataStore.getConfig() || {};
+let days = DataStore.getDays() || {};
+
+// Liste réelle des machines par atelier.
+const MACHINES_PAR_ATELIER = {
+  1: ['14301','14302','14246','14239','14205','14206','14240','14408','14409','14410','14311','14312','14313','14314'],
+  2: ['14415','14116','14117','14118','14119','14120','14121','14122','14123','14124','14125','14126','14127','14128','14129','14130','14131','14548'],
+  3: ['14233','14141','14135','14136','14137','14138','14303','14304','14002','14001'],
+  4: ['14544','14145','14143','14134','14242','14207','14147','14132','14250','14549']
+};
+const REAL_MACHINES = Object.entries(MACHINES_PAR_ATELIER).flatMap(([atelier, nums]) =>
+  nums.map(numero => ({ id:'A'+atelier+'-'+numero, atelier:Number(atelier), numero, mouleId:null }))
+);
+
+// Structure initiale des machines. Elle sert uniquement à initialiser la base.
+// Ensuite, la liste des machines est indépendante des moules et peut être modifiée.
+(function initMachineReference(){
+  const VERSION = 2;
+  const oldMachines = Array.isArray(refs.machines) ? refs.machines : [];
+  if(refs.machineStructureVersion === VERSION && oldMachines.length){
+    refs.machines = oldMachines;
+    return;
+  }
+  const oldByNumero = {};
+  oldMachines.forEach(m => { if(m && m.numero) oldByNumero[String(m.numero)] = m; });
+  const oldByPosition = {};
+  oldMachines.forEach(m => {
+    const a=String(m.atelier||'');
+    if(!oldByPosition[a]) oldByPosition[a]=[];
+    oldByPosition[a].push(m);
+  });
+  const newMachines = [];
+  Object.entries(MACHINES_PAR_ATELIER).forEach(([atelier, nums])=>{
+    nums.forEach((numero,pos)=>{
+      const old = oldByNumero[numero] || (oldByPosition[atelier]||[])[pos] || {};
+      newMachines.push({
+        id:'A'+atelier+'-'+numero,
+        atelier:Number(atelier),
+        numero,
+        mouleId:null
+      });
+    });
+  });
+  refs.machines = newMachines;
+  refs.machineStructureVersion = VERSION;
+
+  // Les moules ne sont plus liés à une machine dans les données de référence.
+  if(Array.isArray(refs.moules)) refs.moules.forEach(m=>{ delete m.machineIds; });
+
+  // Reprendre les données de configuration selon le numéro de machine.
+  const newConfig = {};
+  newMachines.forEach(nm=>{
+    const old = oldByNumero[nm.numero];
+    const oldId = old && old.id;
+    const source = (oldId && config[oldId]) || config[nm.id] || {};
+    newConfig[nm.id] = {
+      ...source,
+      atelier:nm.atelier,
+      num:nm.numero,
+      mouleId: source.mouleId || null
+    };
+  });
+  config = newConfig;
+
+  // Reprendre les journées selon le numéro de machine, sans créer de lien moule permanent.
+  const newDays = {};
+  Object.keys(days||{}).forEach(date=>{
+    const oldDay=days[date];
+    const nd={...oldDay, machines:{}};
+    newMachines.forEach(nm=>{
+      const old = oldByNumero[nm.numero];
+      const oldId = old && old.id;
+      const src = (oldId && oldDay && oldDay.machines && oldDay.machines[oldId]) ||
+                   (oldDay && oldDay.machines && oldDay.machines[nm.id]) || {};
+      nd.machines[nm.id] = {...src};
+    });
+    newDays[date]=nd;
+  });
+  days = newDays;
+  DataStore.saveRefs(refs);
+  DataStore.saveConfig(config);
+  DataStore.saveDays(days);
+})();
+
+// Compatibilité avec les anciennes données : créer la liste des matières et y récupérer les matières déjà utilisées.
+if(!Array.isArray(refs.materiaux)) refs.materiaux = [];
+Object.keys(DataStore.getConfig() || {}).forEach(id => {
+  const v = (DataStore.getConfig() || {})[id]?.matiere;
+  if(v && !refs.materiaux.includes(v)) refs.materiaux.push(v);
+});
+if(refs.materiaux.length===0) refs.materiaux.push('Matière standard');
+refs.moules.forEach(m => { if(m.piecesReelles===undefined || m.piecesReelles===null) m.piecesReelles = m.piecesParMoule || ''; });
+DataStore.saveRefs(refs);
+
+refs.machines.forEach(m => {
+  if(!config[m.id]){
+    config[m.id] = {
+      atelier: m.atelier,
+      num: m.numero,
+      mouleId: m.mouleId,
+      operateur: '',
+      cycle: '',
+      matiere: '',
+      reference: ''
+    };
+  }
+});
+DataStore.saveConfig(config);
+
+let selectedDate = todayStr();
+
+// Ordre strict demandé : atelier 1 puis 2 puis 3 puis 4,
+// et à l'intérieur de chaque atelier exactement l'ordre fourni.
+let machineIds = REAL_MACHINES.map(m => m.id).filter(id => !!config[id]);
+
+function saveConfig(){ DataStore.saveConfig(config); }
+function saveRefs(){ DataStore.saveRefs(refs); }
+function saveDays(){ DataStore.saveDays(days); }
+
+function ensureToday(){
+  const t = selectedDate || todayStr();
+  if(!days[t]){
+    days[t] = { date:t, shift:'', machines:{} };
+    machineIds.forEach(id=>{
+      const m = config[id];
+      days[t].machines[id] = {
+        mouleId: m.mouleId,
+        moulesAvances: [],
+        operateur: m.operateur,
+        cycle: m.cycle,
+        matiere: m.matiere,
+        reference: m.reference,
+        production:'', sacs:'', broye:'', rebuts:'',
+        statut:'marche', arrets: []
+      };
+    });
+    saveDays();
+  }
+  machineIds.forEach(id=>{
+    const dm = days[t].machines[id];
+    if(!dm) return;
+    if(dm.rebuts === undefined) dm.rebuts = '';
+    if(dm.moulesAvances === undefined) dm.moulesAvances = [];
+    if(dm.mouleId === undefined) dm.mouleId = config[id].mouleId || null;
+    if(dm.broye === undefined) dm.broye = '';
+    if(dm.couleur === undefined) dm.couleur = config[id].couleur || '';
+  });
+  return days[t];
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='home') renderHome();
+  if(id==='parametres') renderParametres();
+  if(id==='resume') renderResumeScreen();
+  if(id==='moules') renderMoulesScreen();
+}
+
+function renderHome(){
+  const day = ensureToday();
+  const dateInput=document.getElementById('homeDateInput');
+  if(dateInput) dateInput.value=day.date;
+  document.querySelectorAll('#shiftSegment button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.v === day.shift);
+  });
+}
+function setSelectedDate(v){
+  if(!v) return;
+  selectedDate=v;
+  ensureToday();
+  renderHome();
+}
+
+function setShift(v){
+  const day = ensureToday();
+  day.shift = v;
+  saveDays();
+  renderHome();
+}
+
+let currentParamTab = 'operateurs';
+
+function openReferenceData(){ currentParamTab='operateurs'; showScreen('parametres'); }
+
+function showParamTab(tab){
+  currentParamTab = tab;
+  renderParametres();
+}
+
+function renderParametres(){
+  document.querySelectorAll('#paramTabs button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab === currentParamTab);
+  });
+  const content = document.getElementById('paramContent');
+  if(currentParamTab === 'operateurs') renderOperateursTab(content);
+  else if(currentParamTab === 'moules') renderMoulesTab(content);
+  else if(currentParamTab === 'machines') renderMachinesTab(content);
+  else if(currentParamTab === 'couleurs') renderCouleursTab(content);
+  else if(currentParamTab === 'causes') renderCausesTab(content);
+  else if(currentParamTab === 'materiaux') renderMateriauxTab(content);
+}
+
+function renderOperateursTab(el){
+  let html = '<div class="param-list">';
+  refs.operateurs.forEach((op, i) => {
+    html += `<div class="param-item"><div class="info"><b>${op}</b></div><div class="row" style="width:auto;gap:6px;"><button class="btn-secondary" onclick="editOperateur(${i})">Modifier</button><button class="btn-danger" onclick="removeOperateur(${i})">✕</button></div></div>`;
+  });
+  html += '</div>';
+  html += `<div class="form-row"><input type="text" id="newOperateur" placeholder="Nom de l'opérateur"><button class="btn-primary" style="padding:8px 16px;" onclick="addOperateur()">+</button></div>`;
+  el.innerHTML = html;
+}
+function addOperateur(){
+  const v = document.getElementById('newOperateur').value.trim();
+  if(!v) return;
+  refs.operateurs.push(v); saveRefs(); renderParametres();
+}
+function esc(v){ return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;'); }
+function openEditForm(title, body, onSave){
+  document.getElementById('modalContent').innerHTML=`<h3>${title}</h3>${body}<div class=\"btn-row\"><button type=\"button\" class=\"btn-primary\" id=\"editSaveBtn\">Enregistrer</button><button type=\"button\" class=\"btn-quiet\" onclick=\"closeModal()\">Annuler</button></div>`;
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('editSaveBtn').onclick=onSave;
+}
+function editOperateur(i){ openEditForm('Modifier l’opérateur', `<label>Nom</label><input id=\"editValue\" value=\"${esc(refs.operateurs[i])}\">`, ()=>{ const v=document.getElementById('editValue').value.trim(); if(v){ refs.operateurs[i]=v; saveRefs(); closeModal(); renderParametres(); }}); }
+function removeOperateur(i){
+  if(!confirm('Supprimer cet opérateur ?')) return;
+  refs.operateurs.splice(i, 1); saveRefs(); renderParametres();
+}
+
+function renderMoulesTab(el){
+  let html = '<div class="param-list">';
+  refs.moules.forEach((m, i) => {
+    html += `<div class="param-item" style="display:block;">
+      <div class="moule-db-grid">
+        <div><div class="db-head">N° moule</div><input value="${esc(m.numero)}" onchange="quickEditMoule(${i}, 'numero', this.value)"></div>
+        <div><div class="db-head">Nom du moule</div><input value="${esc(m.nom)}" onchange="quickEditMoule(${i}, 'nom', this.value)"></div>
+        <div><div class="db-head">Pièces théoriques</div><input type="number" min="1" value="${m.piecesParMoule}" onchange="quickEditMoule(${i}, 'piecesParMoule', this.value)"></div>
+        <div><div class="db-head">Pièces réelles</div><input type="number" min="1" value="${m.piecesReelles||''}" onchange="quickEditMoule(${i}, 'piecesReelles', this.value)"></div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;align-items:center;margin-top:7px;">
+        <button class="btn-danger" style="width:36px;padding:6px;margin:0;" onclick="removeMoule(${i})">✕</button>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  html += `<div style="margin-top:12px; padding:12px; background:var(--pale); border:1px solid var(--line);">
+    <label style="margin:0;">Nouveau moule</label>
+    <div class="moule-db-grid" style="margin-top:8px;">
+      <input type="text" id="newMouleNum" placeholder="N° (M004)">
+      <input type="text" id="newMouleNom" placeholder="Nom du moule">
+      <input type="number" id="newMoulePieces" placeholder="Pièces théoriques" min="1">
+      <input type="number" id="newMoulePiecesReelles" placeholder="Pièces réelles" min="1">
+    </div>
+    <button class="btn-primary" style="margin-top:10px;" onclick="addMoule()">Ajouter le moule</button>
+  </div>`;
+  el.innerHTML = html;
+}
+function quickEditMoule(i, field, value){
+  const m=refs.moules[i]; if(!m) return;
+  value=String(value||'').trim();
+  if(field==='piecesParMoule' || field==='piecesReelles'){ const n=parseInt(value); if(!n||n<1){ renderParametres(); return; } m[field]=n; }
+  else { if(!value){ renderParametres(); return; } m[field]=value; }
+  saveRefs(); renderParametres();
+}
+function addMoule(){
+  const num = document.getElementById('newMouleNum').value.trim();
+  const nom = document.getElementById('newMouleNom').value.trim();
+  const pieces = parseInt(document.getElementById('newMoulePieces').value) || 0;
+  const piecesReelles = parseInt(document.getElementById('newMoulePiecesReelles').value) || pieces;
+  const machineId = document.getElementById('newMouleMachine').value;
+  if(!num || !nom || pieces<1){ alert('Numéro, nom et pièces théoriques sont requis'); return; }
+  refs.moules.push({id:generateId('m'), numero:num, nom:nom, piecesParMoule:pieces, piecesReelles:piecesReelles, machineIds:machineId?[machineId]:[]});
+  saveRefs(); renderParametres();
+}
+function editMoule(i){ const m=refs.moules[i]; openEditForm('Modifier le moule', `<label>Numéro</label><input id=\"editNum\" value=\"${esc(m.numero)}\"><label>Nom</label><input id=\"editName\" value=\"${esc(m.nom)}\"><label>Pièces théoriques</label><input id=\"editPieces\" type=\"number\" min=\"1\" value=\"${m.piecesParMoule}\"><label>Pièces réelles</label><input id=\"editPiecesReelles\" type=\"number\" min=\"1\" value=\"${m.piecesReelles||m.piecesParMoule}\">`, ()=>{ const num=document.getElementById('editNum').value.trim(), nom=document.getElementById('editName').value.trim(), p=parseInt(document.getElementById('editPieces').value), pr=parseInt(document.getElementById('editPiecesReelles').value); if(num&&nom&&p>0&&pr>0){m.numero=num;m.nom=nom;m.piecesParMoule=p;m.piecesReelles=pr;saveRefs();closeModal();renderParametres();} }); }
+function removeMoule(i){
+  if(!confirm('Supprimer ce moule ?')) return;
+  refs.moules.splice(i, 1); saveRefs(); renderParametres();
+}
+
+function renderMachinesTab(el){
+  let html = '<div class="param-list">', curAtelier = null;
+  refs.machines.forEach((m, i) => {
+    if(m.atelier !== curAtelier){
+      curAtelier = m.atelier;
+      html += `<h2 style="margin-top:16px; font-size:13px;">Atelier ${curAtelier}</h2>`;
+    }
+    html += `<div class="param-item">
+      <div class="info"><b>${esc(m.numero)}</b><span>Machine ${i+1} — Atelier ${m.atelier}</span></div>
+      <button class="btn-secondary" style="width:auto;padding:6px 10px;" onclick="editMachine(${i})">Modifier</button>
+    </div>`;
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+function editMachine(i){
+  const m=refs.machines[i]; if(!m) return;
+  openEditForm('Modifier la machine', `<label>Numéro de machine</label><input id="editMachineNum" value="${esc(m.numero)}">`, ()=>{
+    const v=document.getElementById('editMachineNum').value.trim();
+    if(!v) return;
+    const duplicate=refs.machines.some((x,j)=>j!==i && String(x.numero).trim()===v);
+    if(duplicate){ alert('Ce numéro de machine existe déjà.'); return; }
+    m.numero=v;
+    // garder l'identifiant interne stable pour ne pas perdre les données de production
+    config[m.id]=config[m.id]||{};
+    config[m.id].num=v;
+    saveRefs(); saveConfig(); closeModal(); renderParametres();
+  });
+}
+
+function renderCouleursTab(el){
+  let html='<div class="param-list">';
+  refs.couleurs.forEach((c,i)=>{ html+=`<div class="param-item"><div class="info"><b>${esc(c.nom)}</b><span>Code : ${esc(c.hex||'')}</span></div><div class="row" style="width:auto;gap:6px;"><button class="btn-secondary" onclick="editCouleur(${i})">Modifier</button><button class="btn-danger" onclick="removeCouleur(${i})">✕</button></div></div>`; });
+  html+='</div><div class="form-row"><input type="text" id="newCouleurNom" placeholder="Nom de la couleur"><input type="text" id="newCouleurHex" placeholder="Code HEX (optionnel)"><button class="btn-primary" style="padding:8px 16px;" onclick="addCouleur()">+</button></div>';
+  el.innerHTML=html;
+}
+function addCouleur(){ const nom=document.getElementById('newCouleurNom').value.trim(); const hex=document.getElementById('newCouleurHex').value.trim(); if(!nom){alert('Nom requis');return;} refs.couleurs.push({id:generateId('c'),nom,hex}); saveRefs(); renderParametres(); }
+function editCouleur(i){ const c=refs.couleurs[i]; openEditForm('Modifier la couleur', `<label>Nom</label><input id="editName" value="${esc(c.nom)}"><label>Code HEX (optionnel)</label><input id="editHex" value="${esc(c.hex||'')}">`, ()=>{ const nom=document.getElementById('editName').value.trim(); const h=document.getElementById('editHex').value.trim(); if(nom){c.nom=nom;c.hex=h;saveRefs();closeModal();renderParametres();} else alert('Nom requis.'); }); }
+function removeCouleur(i){ if(!confirm('Supprimer cette couleur ?'))return; refs.couleurs.splice(i,1); saveRefs(); renderParametres(); }
+
+function renderMateriauxTab(el){
+  let html='<div class="param-list">';
+  refs.materiaux.forEach((m,i)=>{
+    html += `<div class="param-item"><div class="info"><b>${m}</b></div><div class="row" style="width:auto;gap:6px;"><button class="btn-secondary" onclick="editMateriau(${i})">Modifier</button><button class="btn-danger" onclick="removeMateriau(${i})">✕</button></div></div>`;
+  });
+  html += '</div><div class="form-row"><input type="text" id="newMateriau" placeholder="Nom de la matière"><button class="btn-primary" style="padding:8px 16px;" onclick="addMateriau()">+</button></div>';
+  el.innerHTML=html;
+}
+function addMateriau(){ const v=document.getElementById('newMateriau').value.trim(); if(!v)return; if(!refs.materiaux.includes(v)) refs.materiaux.push(v); saveRefs(); renderParametres(); }
+function editMateriau(i){ openEditForm('Modifier la matière', `<label>Matière</label><input id="editValue" value="${esc(refs.materiaux[i])}">`, ()=>{ const v=document.getElementById('editValue').value.trim(); if(v){ refs.materiaux[i]=v; saveRefs(); closeModal(); renderParametres(); }}); }
+function removeMateriau(i){ if(!confirm('Supprimer cette matière ?'))return; refs.materiaux.splice(i,1); saveRefs(); renderParametres(); }
+
+function renderCausesTab(el){
+  let html = '<div class="param-list">';
+  refs.causes.forEach((c, i) => {
+    html += `<div class="param-item"><div class="info"><b>${c}</b></div><div class="row" style="width:auto;gap:6px;"><button class="btn-secondary" onclick="editCause(${i})">Modifier</button><button class="btn-danger" onclick="removeCause(${i})">✕</button></div></div>`;
+  });
+  html += '</div>';
+  html += `<div class="form-row"><input type="text" id="newCause" placeholder="Cause d'arrêt"><button class="btn-primary" style="padding:8px 16px;" onclick="addCause()">+</button></div>`;
+  el.innerHTML = html;
+}
+function addCause(){
+  const v = document.getElementById('newCause').value.trim();
+  if(!v) return;
+  refs.causes.push(v); saveRefs(); renderParametres();
+}
+function editCause(i){ openEditForm('Modifier la cause d’arrêt', `<label>Cause</label><input id=\"editValue\" value=\"${esc(refs.causes[i])}\">`, ()=>{ const v=document.getElementById('editValue').value.trim(); if(v){ refs.causes[i]=v; saveRefs(); closeModal(); renderParametres(); }}); }
+function removeCause(i){
+  if(!confirm('Supprimer cette cause ?')) return;
+  refs.causes.splice(i, 1); saveRefs(); renderParametres();
+}
+
+function renderMoulesScreen(){
+  const el=document.getElementById('moulesList'); let html='',curAtelier=null;
+  machineIds.forEach(id=>{ const c=config[id]; if(c.atelier!==curAtelier){curAtelier=c.atelier;html+=`<h2 style="margin-top:22px;">Atelier ${esc(c.atelier)}</h2>`;}
+    const active=c.couleur||''; const moulesAssignes=refs.moules.filter(m=>(m.machineIds||[]).includes(id)); const moulesLabel=moulesAssignes.length?moulesAssignes.map(m=>m.numero+(m.piecesParMoule?` (${m.piecesParMoule}p)`:'' )).join(', '):'Aucun moule';
+    html+=`<div class="moule-row"><div class="moule-info"><b>${esc(c.num)}</b><span>${esc(moulesLabel)}</span></div><select class="color-select" style="max-width:180px;" onchange="setMouleColor('${id}',this.value)"><option value="">Couleur —</option>${refs.couleurs.map(x=>`<option value="${esc(x.id)}" ${active===x.id?'selected':''}>${esc(x.nom)}</option>`).join('')}</select></div>`;
+  }); el.innerHTML=html;
+}
+
+function getMachineColor(id){ const colorId=config[id]&&config[id].couleur; const c=refs.couleurs.find(x=>x.id===colorId); return c?c.hex:''; }
+function openColorPicker(id){
+  const current=config[id]&&config[id].couleur?config[id].couleur:'';
+  document.getElementById('modalContent').innerHTML=`<h3>Couleur du moule</h3><select id="modalColorSelect" class="color-select"><option value="">—</option>${refs.couleurs.map(c=>`<option value="${esc(c.id)}" ${current===c.id?'selected':''}>${esc(c.nom)}</option>`).join('')}</select><button type="button" class="btn-primary" style="margin-top:10px;" onclick="setMouleColor('${id}',document.getElementById('modalColorSelect').value)">Valider</button><button type="button" class="btn-quiet" onclick="closeModal()">Fermer</button>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('show');}
+function setMouleColor(id, color){ config[id].couleur=color; saveConfig(); closeModal(); if(document.getElementById('moules').classList.contains('active')) renderMoulesScreen(); else if(document.getElementById('tournee').classList.contains('active')) renderTourneeStep(); }
+
+let currentTournee = 1, currentIndex = 0, tempArrets = [];
+
+function startTournee(n){
+  const day = ensureToday();
+  if(!day.shift){ alert('Choisissez le Shift avant de commencer.'); return; }
+  currentTournee = n; currentIndex = 0; showScreen('tournee'); renderTourneeStep();
+}
+function mouleForId(mouleId){ return refs.moules.find(x=>x.id===mouleId) || null; }
+function showOperateurSuggestions(value, machineId){
+  const box=document.getElementById('operateurSuggestions');
+  if(!box) return;
+  const q=String(value||'').trim().toLowerCase();
+  const list=refs.operateurs.filter(op => !q || String(op).toLowerCase().includes(q));
+  if(!list.length){ box.innerHTML=''; box.style.display='none'; return; }
+  box.innerHTML=list.map(op => `<div class="moule-suggestion" onmousedown="selectOperateurSuggestion('${machineId}','${esc(op)}')"><b>${esc(op)}</b></div>`).join('');
+  box.style.display='block';
+}
+function selectOperateurSuggestion(machineId, operateur){
+  const input=document.getElementById('f_operateur');
+  if(input) input.value=operateur;
+  const box=document.getElementById('operateurSuggestions');
+  if(box) box.style.display='none';
+}
+
+function showMouleSuggestions(value, machineId){
+  const box=document.getElementById('mouleSuggestions');
+  if(!box) return;
+  const q=String(value||'').trim().toLowerCase();
+  const list=refs.moules.filter(m => !q || String(m.numero).toLowerCase().includes(q) || String(m.nom).toLowerCase().includes(q));
+  if(!list.length){ box.innerHTML=''; box.style.display='none'; return; }
+  box.innerHTML=list.map(m => `<div class="moule-suggestion" onmousedown="selectMouleSuggestion('${machineId}','${esc(m.id)}')"><b>${esc(m.numero)}</b>${esc(m.nom)}</div>`).join('');
+  box.style.display='block';
+}
+function selectMouleSuggestion(machineId, mouleId){
+  const m=refs.moules.find(x=>x.id===mouleId);
+  if(!m) return;
+  const input=document.getElementById('f_moule_num');
+  if(input) input.value=m.numero;
+  lookupMoule(machineId,m.numero);
+  const box=document.getElementById('mouleSuggestions');
+  if(box) box.style.display='none';
+}
+document.addEventListener('click', function(e){
+  const box=document.getElementById('mouleSuggestions');
+  if(box && !e.target.closest('.moule-autocomplete')) box.style.display='none';
+  const opBox=document.getElementById('operateurSuggestions');
+  if(opBox && !e.target.closest('.operateur-autocomplete')) opBox.style.display='none';
+});
+
+function lookupMoule(machineId, numero){
+  const day=ensureToday(), m=day.machines[machineId];
+  const found=refs.moules.find(x=>String(x.numero).toLowerCase()===String(numero).trim().toLowerCase());
+  const nom=document.getElementById('f_moule_nom'), theo=document.getElementById('f_moule_theorique'), reel=document.getElementById('f_moule_reel');
+  if(found){
+    if(nom) nom.value=found.nom;
+    if(theo) theo.value=found.piecesParMoule; if(reel) reel.value=found.piecesReelles||'';
+    m.mouleId=found.id; config[machineId].mouleId=found.id;
+  } else {
+    if(nom) nom.value=''; if(theo) theo.value=''; if(reel) reel.value='';
+    if(!numero.trim()){ m.mouleId=null; config[machineId].mouleId=null; saveDays(); saveConfig(); }
+  }
+}
+
+function renderTourneeStep(){
+  const day = ensureToday(), id = machineIds[currentIndex], c = config[id], m = day.machines[id];
+  document.getElementById('tourneeProgress').innerHTML = `<span>Atelier ${c.atelier} — Tournée ${currentTournee}</span><b>${pad(currentIndex+1)} / ${machineIds.length}</b>`;
+  const card = document.getElementById('tourneeCard');
+  if(currentTournee === 1){
+    card.innerHTML = `
+      <div class="hero-meta">Machine</div><div class="hero">${c.num}</div><hr class="rule-light">
+      <label>Moule assigné</label>
+      <div class="moule-lookup">
+        <div class="moule-autocomplete" style="position:relative;">
+          <label style="font-size:10px;">N° moule</label>
+          <input id="f_moule_num" autocomplete="off" value="${mouleForId(m.mouleId)?.numero||''}" placeholder="M004" oninput="lookupMoule('${id}', this.value); showMouleSuggestions(this.value, '${id}')" onfocus="showMouleSuggestions(this.value, '${id}')">
+          <div id="mouleSuggestions" class="moule-suggestions"></div>
+        </div>
+        <div><label style="font-size:10px;">Nom</label><input id="f_moule_nom" value="${mouleForId(m.mouleId)?.nom||''}" readonly></div>
+        <div><label style="font-size:10px;">Pièces théoriques</label><input id="f_moule_theorique" value="${mouleForId(m.mouleId)?.piecesParMoule||''}" readonly></div>
+        <div><label style="font-size:10px;">Pièces réelles</label><input id="f_moule_reel" type="number" min="0" value="${mouleForId(m.mouleId)?.piecesReelles||''}" placeholder="À saisir"></div>
+      </div>
+      <div class="setup-inline">
+        <div class="operateur-autocomplete" style="position:relative;"><label>Nom de l'opérateur</label><input id="f_operateur" autocomplete="off" value="${esc(m.operateur||'')}" placeholder="Tapez le nom de l'opérateur" oninput="showOperateurSuggestions(this.value, '${id}')" onfocus="showOperateurSuggestions(this.value, '${id}')"><div id="operateurSuggestions" class="moule-suggestions"></div></div>
+        <div><label>Cycle (secondes)</label><input id="f_cycle" type="number" min="0" step="0.1" value="${esc(m.cycle||'')}" placeholder="Ex. 25"></div>
+        <div><label>Couleur</label><select id="f_couleur" class="color-select">
+            <option value="">—</option>${refs.couleurs.map(x=>`<option value="${esc(x.id)}" ${m.couleur===x.id?'selected':''}>${esc(x.nom)}</option>`).join('')}
+          </select></div>
+      </div>
+      <div class="setup-inline">
+        <div><label>Matière</label><select id="f_matiere"><option value="">—</option>${refs.materiaux.map(x => `<option value="${x}" ${m.matiere===x?'selected':''}>${x}</option>`).join('')}</select></div>
+        <div><label>État</label><select id="f_statut"><option value="marche" ${m.statut!=='arret_total'?'selected':''}>En marche</option><option value="arret_total" ${m.statut==='arret_total'?'selected':''}>Arrêt total</option></select></div>
+      </div>
+      <div class="hidden-section"><button class="hidden-toggle" onclick="toggleAdvanced('${id}')">+ Ajouter un 2ème moule</button>
+        <div class="hidden-content" id="advanced_${id}"><div style="font-size:12px; color:var(--grey); margin-bottom:8px;">Le nom et les pièces théoriques sont récupérés automatiquement. Saisissez uniquement matière, couleur et cycle.</div>
+          <div id="advancedMoulesList_${id}"></div><button class="btn-secondary" style="margin-top:8px; padding:8px;" onclick="addAdvancedMoule('${id}')">+ Ajouter un 2ème moule</button>
+        </div>
+      </div>`;
+    renderAdvancedMoules(id);
+  } else {
+    tempArrets = (m.arrets && m.arrets.length) ? JSON.parse(JSON.stringify(m.arrets)) : [{cause:'', duree:''}];
+    const moule = refs.moules.find(x => x.id === m.mouleId);
+    const mouleInfo = moule ? `Moule: ${moule.numero} (${moule.piecesParMoule} pièces)` : 'Aucun moule assigné';
+    card.innerHTML = `
+      <div class="hero-meta">Machine</div><div class="hero">${c.num}</div><div style="font-size:12px; color:var(--grey); margin-top:4px;">${mouleInfo}</div><hr class="rule-light">
+      <label>Quantité produite — moule principal</label><input id="f_production" type="number" min="0" value="${m.production}">
+      <div class="form-row"><div style="flex:1"><label>Nombre de sacs matière</label><input id="f_sacs" type="number" min="0" value="${m.sacs}"></div><div style="flex:1"><label>Matière broyée</label><input id="f_broye" type="number" min="0" value="${m.broye||''}"></div></div>
+      <label>Pièces rebutées — 2ème poste</label><input id="f_rebuts" type="number" min="0" value="${m.rebuts}">
+      ${(m.moulesAvances&&m.moulesAvances.length)?`<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--ink);">
+        <div style="font-weight:700;font-size:14px;">2ème moule — production de la 2ème tournée</div>
+        <div style="font-size:12px;color:var(--grey);margin-top:3px;">Zone dédiée sous le moule principal.</div>
+        <div id="advancedT2List"></div>
+      </div>`:''}
+      <label>Causes d'arrêt</label><div id="arretsList"></div><button type="button" class="btn-secondary" onclick="addArretRow()">+ Ajouter une cause</button>`;
+    renderArretsList();
+    renderAdvancedT2(id);
+  }
+}
+function renderAdvancedT2(id){
+  const el=document.getElementById('advancedT2List'); if(!el) return;
+  const arr=ensureToday().machines[id].moulesAvances||[];
+  el.innerHTML=arr.map((ma,i)=>{
+    const mo=mouleForId(ma.mouleId);
+    return `<div style="padding:12px 0;border-top:1px solid var(--line);margin-top:8px;">
+      <div class="moule-lookup">
+        <div><label style="font-size:10px;">N° moule</label><input value="${mo?esc(mo.numero):''}" readonly></div>
+        <div><label style="font-size:10px;">Nom</label><input value="${mo?esc(mo.nom):''}" readonly></div>
+        <div><label style="font-size:10px;">Pièces théoriques</label><input value="${mo?esc(mo.piecesParMoule):''}" readonly></div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1"><label style="font-size:10px;">Quantité</label><input type="number" min="0" value="${esc(ma.production||'')}" onchange="updateAdvancedMoule('${id}',${i},'production',this.value)"></div>
+        <div style="flex:1"><label style="font-size:10px;">Nombre de sacs</label><input type="number" min="0" value="${esc(ma.sacs||'')}" onchange="updateAdvancedMoule('${id}',${i},'sacs',this.value)"></div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1"><label style="font-size:10px;">Nombre de broyé</label><input type="number" min="0" value="${esc(ma.broye||'')}" onchange="updateAdvancedMoule('${id}',${i},'broye',this.value)"></div>
+        <div style="flex:1"><label style="font-size:10px;">Pièces remisées / jetées</label><input type="number" min="0" value="${esc(ma.rebuts||'')}" onchange="updateAdvancedMoule('${id}',${i},'rebuts',this.value)"></div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1"><label style="font-size:10px;">Temps d'arrêt (min)</label><input type="number" min="0" value="${esc(ma.arret||'')}" onchange="updateAdvancedMoule('${id}',${i},'arret',this.value)"></div>
+        <div style="flex:1"><label style="font-size:10px;">Type de l'arrêt</label><select onchange="updateAdvancedMoule('${id}',${i},'cause',this.value)"><option value="">Aucun</option>${refs.causes.map(x=>`<option value="${esc(x)}" ${ma.cause===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleAdvanced(id){
+  const el=document.getElementById('advanced_'+id);
+  if(el) el.classList.toggle('show');
+}
+
+function renderAdvancedMoules(id){
+  const day=ensureToday(), m=day.machines[id], list=document.getElementById('advancedMoulesList_'+id);
+  if(!list) return;
+  const arr=m.moulesAvances||[];
+  list.innerHTML=arr.map((ma,i)=>{
+    const mo=mouleForId(ma.mouleId);
+    return `<div class="advanced-moule-row" style="padding:10px;border:1px solid var(--line);margin-top:8px;background:var(--paper);">
+      <div class="form-row">
+        <select onchange="updateAdvancedMoule('${id}',${i},'mouleId',this.value); renderAdvancedMoules('${id}')" style="flex:1;">
+          <option value="">Choisir un moule</option>
+          ${refs.moules.map(x=>`<option value="${x.id}" ${ma.mouleId===x.id?'selected':''}>${esc(x.numero)} — ${esc(x.nom)}</option>`).join('')}
+        </select>
+        <button class="btn-danger" onclick="removeAdvancedMoule('${id}',${i})">✕</button>
+      </div>
+      <div class="moule-lookup" style="margin-top:8px;">
+        <div><label style="font-size:10px;">Nom</label><input value="${mo?esc(mo.nom):''}" readonly></div>
+        <div><label style="font-size:10px;">Pièces théoriques</label><input value="${mo?esc(mo.piecesParMoule):''}" readonly></div>
+        <div><label style="font-size:10px;">N° moule</label><input value="${mo?esc(mo.numero):''}" readonly></div>
+      </div>
+      <div class="form-row">
+        <div style="flex:1"><label style="font-size:10px;">Matière</label><select onchange="updateAdvancedMoule('${id}',${i},'matiere',this.value)"><option value="">—</option>${refs.materiaux.map(x=>`<option value="${esc(x)}" ${ma.matiere===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div>
+        <div style="flex:1"><label style="font-size:10px;">Cycle (secondes)</label><input type="number" value="${esc(ma.cycle||'')}" onchange="updateAdvancedMoule('${id}',${i},'cycle',this.value)"></div>
+      </div>
+      <label style="font-size:10px;">Couleur</label>
+      <select class="color-select" onchange="updateAdvancedMoule('${id}',${i},'couleur',this.value)">
+        <option value="">—</option>${refs.couleurs.map(x=>`<option value="${esc(x.id)}" ${ma.couleur===x.id?'selected':''}>${esc(x.nom)}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('');
+}
+
+function getAdvancedColor(ma){ const c=refs.couleurs.find(x=>x.id===ma.couleur); return c?c.nom:''; }
+function openAdvancedColorPicker(id,index){
+  const ma=ensureToday().machines[id].moulesAvances[index];
+  document.getElementById('modalContent').innerHTML=`<h3>Couleur du moule</h3><select id="modalAdvancedColor" class="color-select"><option value="">—</option>${refs.couleurs.map(c=>`<option value="${esc(c.id)}" ${ma.couleur===c.id?'selected':''}>${esc(c.nom)}</option>`).join('')}</select><button type="button" class="btn-primary" style="margin-top:10px;" onclick="updateAdvancedMoule('${id}',${index},'couleur',document.getElementById('modalAdvancedColor').value);closeModal();renderAdvancedMoules('${id}')">Valider</button><button class="btn-quiet" onclick="closeModal()">Fermer</button>`;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function addAdvancedMoule(id){
+  const day = ensureToday(), m = day.machines[id];
+  if(!m.moulesAvances) m.moulesAvances = [];
+  m.moulesAvances.push({mouleId:'', matiere:'', cycle:'', couleur:'', production:'', sacs:'', broye:'', rebuts:'', arret:'', cause:''}); saveDays(); renderAdvancedMoules(id);
+}
+function updateAdvancedMoule(id, index, field, value){
+  const day = ensureToday(), m = day.machines[id];
+  if(!m.moulesAvances || !m.moulesAvances[index]) return;
+  m.moulesAvances[index][field] = value; saveDays();
+}
+function removeAdvancedMoule(id, index){
+  const day = ensureToday(), m = day.machines[id];
+  if(!m.moulesAvances) return;
+  m.moulesAvances.splice(index, 1); saveDays(); renderAdvancedMoules(id);
+}
+function updateMouleAssign(id, mouleId){
+  const day = ensureToday();
+  day.machines[id].mouleId = mouleId || null; config[id].mouleId = mouleId || null;
+  saveDays(); saveConfig();
+}
+function renderArretsList(){
+  const el = document.getElementById('arretsList');
+  el.innerHTML = tempArrets.map((a,i)=>`<div class="row" style="margin-top:8px;"><select style="flex:2;" onchange="tempArrets[${i}].cause=this.value"><option value="">Choisir une cause</option>${refs.causes.map(c => `<option value="${c}" ${a.cause===c?'selected':''}>${c}</option>`).join('')}</select><input type="number" placeholder="Min" value="${a.duree||''}" style="flex:0 0 64px;" oninput="tempArrets[${i}].duree=this.value"><button type="button" class="btn-danger" onclick="removeArretRow(${i})">✕</button></div>`).join('');
+}
+function addArretRow(){ tempArrets.push({cause:'', duree:''}); renderArretsList(); }
+function removeArretRow(i){ tempArrets.splice(i,1); if(tempArrets.length===0) tempArrets.push({cause:'', duree:''}); renderArretsList(); }
+
+function saveCurrentStep(){
+  const day = ensureToday(), id = machineIds[currentIndex], m = day.machines[id];
+  if(currentTournee === 1){
+    const typedMoule=document.getElementById('f_moule_num').value.trim();
+    const foundMoule=refs.moules.find(x=>String(x.numero).toLowerCase()===typedMoule.toLowerCase());
+    if(typedMoule && !foundMoule){ alert('Numéro de moule introuvable dans la base de données.'); return; }
+    m.mouleId = foundMoule ? foundMoule.id : null;
+    m.operateur = document.getElementById('f_operateur').value;
+    m.cycle = document.getElementById('f_cycle').value;
+    m.matiere = document.getElementById('f_matiere').value;
+    m.couleur = document.getElementById('f_couleur').value;
+    m.statut = document.getElementById('f_statut') ? document.getElementById('f_statut').value : (m.statut || 'marche');
+    const realFoot=document.getElementById('f_moule_reel'); if(foundMoule && realFoot) foundMoule.piecesReelles=parseInt(realFoot.value)||0;
+    m.piecesReelles = realFoot ? realFoot.value : '';
+    config[id].mouleId = m.mouleId; config[id].operateur = m.operateur; config[id].cycle = m.cycle; config[id].matiere = m.matiere; config[id].couleur = m.couleur;
+    saveConfig();
+  } else {
+    m.production = document.getElementById('f_production').value;
+    m.sacs = document.getElementById('f_sacs').value;
+    m.broye = document.getElementById('f_broye') ? document.getElementById('f_broye').value : '';
+    m.rebuts = document.getElementById('f_rebuts').value;
+    m.statut = document.getElementById('f_statut').value;
+    m.arrets = tempArrets.filter(a => (a.cause && a.cause.trim()) || (a.duree && parseFloat(a.duree)>0));
+  }
+  saveDays();
+}
+function stepTournee(dir){
+  saveCurrentStep(); currentIndex += dir;
+  if(currentIndex < 0) currentIndex = 0;
+  if(currentIndex >= machineIds.length){ showScreen(currentTournee === 1 ? 'moules' : 'home'); return; }
+  renderTourneeStep();
+}
+
+function renderResumeScreen(){
+  const sel = document.getElementById('resumeDateSelect'), keys = Object.keys(days).sort().reverse();
+  sel.innerHTML = keys.map(k=>`<option value="${k}">${formatDateShort(k)}</option>`).join('');
+  if(keys.length) sel.value = keys.includes(todayStr()) ? todayStr() : keys[0];
+  renderResume();
+}
+function renderResume(){
+  const dateKey = document.getElementById('resumeDateSelect').value, day = days[dateKey], content = document.getElementById('resumeContent');
+  if(!day){ content.innerHTML = '<p>Aucune donnée.</p>'; return; }
+
+  const parAtelier = {}, ouvriersJour = new Set();
+  let totalMachinesActives = 0;
+  const orderedMachines = [...machineIds].sort((a,b)=>{
+    const ca=config[a]||{}, cb=config[b]||{};
+    if(Number(ca.atelier||0)!==Number(cb.atelier||0)) return Number(ca.atelier||0)-Number(cb.atelier||0);
+    const na=String(ca.num||ca.numero||a), nb=String(cb.num||cb.numero||b);
+    const la=(typeof MACHINES_PAR_ATELIER!=='undefined'&&MACHINES_PAR_ATELIER[ca.atelier]) ? MACHINES_PAR_ATELIER[ca.atelier].indexOf(na) : -1;
+    const lb=(typeof MACHINES_PAR_ATELIER!=='undefined'&&MACHINES_PAR_ATELIER[cb.atelier]) ? MACHINES_PAR_ATELIER[cb.atelier].indexOf(nb) : -1;
+    return (la<0?9999:la)-(lb<0?9999:lb);
+  });
+
+  function getMouldRows(m){
+    const rows=[];
+    const main=refs.moules.find(x=>x.id===m.mouleId);
+    if(main) rows.push({moule:main, cycle:String(m.cycle||'').trim(), couleurId:m.couleur});
+    (m.moulesAvances||[]).forEach(ma=>{
+      const mo=refs.moules.find(x=>x.id===ma.mouleId);
+      if(mo) rows.push({moule:mo, cycle:String(ma.cycle||'').trim(), couleurId:ma.couleur});
+    });
+    return rows;
+  }
+
+  orderedMachines.forEach(id=>{
+    const c=config[id]||{}, m=day.machines[id]||{}, atelier=c.atelier;
+    if(!parAtelier[atelier]) parAtelier[atelier]={machines:0,ouvriers:new Set(),rows:[]};
+    const a=parAtelier[atelier];
+    const operateur=String(m.operateur||'').trim();
+    const mouldRows=getMouldRows(m);
+    if(m.statut !== 'arret_total'){ a.machines+=1; totalMachinesActives+=1; }
+    if(operateur){ a.ouvriers.add(operateur); ouvriersJour.add(operateur); }
+    a.rows.push({id,c,m,mouldRows});
+  });
+
+  let html=`<div class="resume-buttons">
+    <button type="button" class="btn-primary" onclick="showResumePart('resumeMoules')">📋 Moules + couleurs</button>
+    <button type="button" class="btn-secondary" onclick="showResumePart('resumeAteliers')">🏭 Ateliers : machines + ouvriers</button>
+  </div>
+  <div id="resumeMoules" class="resume-part">
+    <div class="card"><h2>Tournée 1 — Moules par machine</h2>`;
+
+  Object.keys(parAtelier).sort((a,b)=>Number(a)-Number(b)).forEach(at=>{
+    html+=`<h3 style="margin:16px 0 6px">Atelier ${esc(at)}</h3>`;
+    parAtelier[at].rows.forEach(r=>{
+      const noMoule=r.mouldRows.length===0;
+      const cycleMissing=!noMoule && r.mouldRows.some(x=>!x.cycle);
+      const dot=noMoule
+        ? '<span title="Aucun moule" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dc2626;margin-right:5px;vertical-align:middle"></span>'
+        : (cycleMissing ? '<span title="Cycle manquant" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b;margin-right:5px;vertical-align:middle"></span>' : '');
+      const moulds=noMoule
+        ? '<span style="color:#777">Aucun moule</span>'
+        : r.mouldRows.map(x=>{
+            const col=refs.couleurs.find(c=>c.id===(x.couleurId||r.m.couleur||r.c.couleur));
+            return `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:10px;padding:3px 8px;border:1px solid #ddd;border-radius:8px"><b>${esc(x.moule.numero)}</b><span>${esc(col?col.nom:'—')}</span></span>`;
+          }).join('');
+      html+=`<div class="resume-machine-line" style="display:flex;align-items:center;gap:6px;padding:8px 4px;border-bottom:1px solid #eee;flex-wrap:wrap">
+        <span style="min-width:88px;font-weight:700;white-space:nowrap">${dot}${esc(String(r.c.num||r.id))}</span>
+        <span style="display:flex;align-items:center;flex-wrap:wrap">${moulds}</span>
+      </div>`;
+    });
+  });
+  html+=`</div></div>
+  <div id="resumeAteliers" class="resume-part" style="display:none;">
+    <div class="card"><h2>Tournée 1 — Ateliers</h2>`;
+  Object.keys(parAtelier).sort((a,b)=>Number(a)-Number(b)).forEach(at=>{
+    const a=parAtelier[at];
+    html+=`<div class="atelier-summary"><h3>Atelier ${esc(at)}</h3><div>Machines en fonctionnement : <b>${a.machines}</b></div><div>Ouvriers : <b>${a.ouvriers.size}</b></div></div>`;
+  });
+  html+=`<div class="atelier-summary total"><h3>Total</h3><div>Machines en fonctionnement : <b>${totalMachinesActives}</b></div><div>Ouvriers uniques : <b>${ouvriersJour.size}</b></div></div></div></div>`;
+  content.innerHTML=html;
+}
+function showResumePart(id){
+  ['resumeMoules','resumeAteliers'].forEach(x=>{const el=document.getElementById(x);if(el)el.style.display=(x===id?'block':'none');});
+}
+
+function exportExcel(){
+  const dateKey=document.getElementById('resumeDateSelect')&&document.getElementById('resumeDateSelect').value?document.getElementById('resumeDateSelect').value:todayStr();
+  const day=days[dateKey]||ensureToday();
+  const rows=machineIds.map(id=>{
+    const c=config[id],m=day.machines[id],moule=refs.moules.find(x=>x.id===m.mouleId),couleur=refs.couleurs.find(x=>x.id===(m.couleur||c.couleur));
+    const moulesAvancesStr=(m.moulesAvances||[]).filter(ma=>ma.mouleId).map(ma=>{const mo=refs.moules.find(x=>x.id===ma.mouleId);return mo?`${mo.numero} (${ma.pieces||0}p)`:'';}).filter(x=>x).join('; ');
+    return {Date:formatDateShort(day.date),Shift:day.shift,Atelier:c.atelier,Machine:c.num,Moule:moule?moule.numero:'',MouleNom:moule?moule.nom:'',PiecesTheoriques:moule?moule.piecesParMoule:'',PiecesReelles:moule?moule.piecesReelles:'',MoulesAvances:moulesAvancesStr,CouleurMoule:couleur?couleur.nom:'',ProductionMoule2:(m.moulesAvances||[]).map(x=>x.production||'').join('; '),SacsMoule2:(m.moulesAvances||[]).map(x=>x.sacs||'').join('; '),BroyeMoule2:(m.moulesAvances||[]).map(x=>x.broye||'').join('; '),RebutsMoule2:(m.moulesAvances||[]).map(x=>x.rebuts||'').join('; '),TempsArretMoule2:(m.moulesAvances||[]).map(x=>x.arret||'').join('; '),TypeArretMoule2:(m.moulesAvances||[]).map(x=>x.cause||'').join('; '),Operateur:m.operateur,Cycle:m.cycle,Matiere:m.matiere,Production:m.production,SacsMatiere:m.sacs,MatiereBroyee:m.broye||'',Rebuts:m.rebuts,Etat:m.statut==='arret_total'?'Arrêt total':'Marche',TempsArret:(m.arrets||[]).reduce((s,a)=>s+(parseFloat(a.duree)||0),0),CausesArret:(m.arrets||[]).filter(a=>a.cause).map(a=>a.cause+(a.duree?` (${a.duree}min)`:'')).join('; ')};
+  });
+  const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Tournee');
+  XLSX.writeFile(wb,'tournee_'+day.date+'.xlsx');
+}
+
+renderHome();
+</script>
+</body>
+</html>
