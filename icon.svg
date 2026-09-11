@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+<defs>
+<linearGradient id="bgGrad2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#0284c7;stop-opacity:1"/><stop offset="100%" style="stop-color:#0f172a;stop-opacity:1"/></linearGradient>
+<linearGradient id="pulseGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#38bdf8;stop-opacity:1"/><stop offset="100%" style="stop-color:#22c55e;stop-opacity:1"/></linearGradient>
+<filter id="shadow" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.25"/></filter>
+</defs>
+<rect x="10" y="10" width="100" height="100" rx="22" fill="url(#bgGrad2)" filter="url(#shadow)"/>
+<path d="M 28 32 L 40 32 L 40 88 L 28 88 Z" fill="#ffffff" opacity="0.15"/>
+<path d="M 80 32 L 92 32 L 92 88 L 80 88 Z" fill="#ffffff" opacity="0.15"/>
+<circle cx="45" cy="42" r="5.5" fill="#22c55e" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="60" cy="42" r="5.5" fill="#22c55e" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="75" cy="42" r="5.5" fill="#eab308" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="45" cy="58" r="5.5" fill="#ef4444" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="60" cy="58" r="5.5" fill="#22c55e" stroke="#ffffff" stroke-width="1.5"/>
+<circle cx="75" cy="58" r="5.5" fill="#38bdf8" stroke="#ffffff" stroke-width="1.5"/>
+<path d="M 32 78 L 50 78 L 58 86 L 70 72 L 88 72" fill="none" stroke="url(#pulseGrad)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="88" cy="72" r="4.5" fill="#ffffff"/>
+</svg>
