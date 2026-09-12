@@ -216,6 +216,15 @@
 </style>
 
 <style>
+/* Workshop popup: same simple centered list style as material/color. */
+.atelier-select-wrap{position:relative;width:100%;cursor:pointer;}
+.atelier-select-wrap .atelier-popup-select{pointer-events:none;}
+.atelier-popup-list{position:fixed;z-index:99999;display:none;min-width:220px;max-width:calc(100vw - 24px);max-height:52vh;overflow:auto;background:#fff;border:1px solid #e1e5eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:5px;}
+.atelier-popup-list.open{display:block;}
+.atelier-popup-option{padding:10px 11px;border-radius:7px;font-size:14px;font-weight:600;color:#30343b;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;}
+.atelier-popup-option + .atelier-popup-option{margin-top:2px;}
+.atelier-popup-option:active,.atelier-popup-option:hover{background:#f1f3f6;}
+.atelier-popup-option.selected{background:#e9edf2;font-weight:800;}
 /* Status popup: En marche / Arrêt total, centered on screen in both templates. */
 .status-popup-select{cursor:pointer;}
 .status-popup-select.status-popup-hidden{pointer-events:none;}
@@ -291,7 +300,7 @@
 <div id="tournee" class="screen">
   <div class="progress" id="tourneeProgress"></div>
   <label for="tourneeJumpAtelier" style="margin-top:10px;">Aller à l'atelier</label>
-  <select id="tourneeJumpAtelier" onchange="onJumpAtelierChange()"></select>
+  <div class="atelier-select-wrap"><select id="tourneeJumpAtelier" class="atelier-popup-select" onchange="onJumpAtelierChange()"></select></div>
   <div id="tourneeCard"></div>
   <div class="btn-row">
     <button class="btn-secondary" style="margin-top:0;" onclick="stepTournee(-1)">‹ Précédent</button>
@@ -1003,7 +1012,7 @@ function renderMoulesTab(el){
     const chipsHTML = mats.length
       ? mats.map(mat => `<span class="mat-chip">${esc(mat)}</span>`).join('')
       : '<span class="mat-chip-none">Toutes les matières</span>';
-    html += `<div class="param-item" style="display:block;">
+    html += `<div class="param-item" data-search="${esc(String(m.numero||'').toLowerCase())} ${esc(String(m.nom||'').toLowerCase())}" style="display:block;">
       <div class="moule-db-grid">
         <div><div class="db-head">N° moule</div><input value="${esc(m.numero)}" onchange="quickEditMoule(${i}, 'numero', this.value)"></div>
         <div><div class="db-head">Nom du moule</div><input value="${esc(m.nom)}" onchange="quickEditMoule(${i}, 'nom', this.value)"></div>
@@ -1027,7 +1036,7 @@ function renderMoulesTab(el){
 function filterMoulesTab(q){
   const query = String(q || '').trim().toLowerCase();
   document.querySelectorAll('#paramContent .param-list .param-item').forEach(item=>{
-    const text=item.textContent.toLowerCase();
+    const text=String(item.dataset.search || item.textContent || '').toLowerCase();
     item.style.display=(!query || text.includes(query)) ? '' : 'none';
   });
 }
@@ -2386,6 +2395,42 @@ document.addEventListener('input', function(e){
   },{passive:false,capture:true});
   window.addEventListener('resize',closePopup);
   window.addEventListener('scroll',closePopup,true);
+})();
+</script>
+
+<script>
+(function(){
+  let popup=null, owner=null, sx=0, sy=0, moved=false;
+  function closeAtelierPopup(){if(popup){popup.classList.remove('open');popup.innerHTML='';}owner=null;}
+  function ensureAtelierPopup(){
+    if(popup) return popup;
+    popup=document.createElement('div'); popup.className='atelier-popup-list'; popup.id='atelierPopupList';
+    document.body.appendChild(popup);
+    popup.addEventListener('click',function(e){
+      const opt=e.target.closest('.atelier-popup-option'); if(!opt||!owner)return;
+      const sel=owner.querySelector('select.atelier-popup-select'); if(!sel)return;
+      sel.value=opt.dataset.value||''; sel.dispatchEvent(new Event('change',{bubbles:true})); closeAtelierPopup();
+    });
+    return popup;
+  }
+  function openAtelierPopup(wrap){
+    const sel=wrap.querySelector('select.atelier-popup-select'); if(!sel)return;
+    const box=ensureAtelierPopup(); owner=wrap;
+    const escv=v=>String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    box.innerHTML=Array.from(sel.options).filter(o=>!o.disabled).map(o=>`<div class="atelier-popup-option ${String(o.value)===String(sel.value)?'selected':''}" data-value="${escv(o.value)}">${escv(o.textContent)}</div>`).join('');
+    box.classList.add('open');
+    box.style.minWidth=Math.max(220,Math.min(wrap.getBoundingClientRect().width,360))+'px';
+    requestAnimationFrame(()=>{const h=box.offsetHeight;box.style.left=Math.max(12,(innerWidth-box.offsetWidth)/2)+'px';box.style.top=Math.max(10,(innerHeight-h)/2)+'px';});
+  }
+  document.addEventListener('click',function(e){
+    const wrap=e.target.closest&&e.target.closest('.atelier-select-wrap');
+    if(wrap){e.preventDefault();e.stopPropagation();if(owner===wrap&&popup&&popup.classList.contains('open'))closeAtelierPopup();else openAtelierPopup(wrap);return;}
+    if(!e.target.closest||!e.target.closest('#atelierPopupList'))closeAtelierPopup();
+  },true);
+  document.addEventListener('touchstart',e=>{const t=e.touches&&e.touches[0];if(t){sx=t.clientX;sy=t.clientY;moved=false;}},{passive:true,capture:true});
+  document.addEventListener('touchmove',e=>{const t=e.touches&&e.touches[0];if(t&&(Math.abs(t.clientX-sx)>14||Math.abs(t.clientY-sy)>14))moved=true;},{passive:true,capture:true});
+  document.addEventListener('touchend',function(e){const wrap=e.target.closest&&e.target.closest('.atelier-select-wrap');if(!wrap||moved)return;e.preventDefault();e.stopPropagation();if(owner===wrap&&popup&&popup.classList.contains('open'))closeAtelierPopup();else openAtelierPopup(wrap);},{passive:false,capture:true});
+  window.addEventListener('resize',closeAtelierPopup); window.addEventListener('scroll',closeAtelierPopup,true);
 })();
 </script>
 
