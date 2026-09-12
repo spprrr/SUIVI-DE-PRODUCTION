@@ -2079,15 +2079,20 @@ function exportExcel(){
                   ? (parseInt(eff.absents) || 0)
                   : Math.max(totalOuvriers - presents, 0);
 
+  /* Feuille 2 : Suivi Présence — toutes les informations du jour sur UNE SEULE LIGNE */
   const effectifRows = [
-    { 'Date':           formatDateShort(day.date) },
-    { 'Shift':          day.shift || '' },
-    { 'Total ouvriers': totalOuvriers },
-    { 'Présents':       presents },
-    { 'Absents':        absents }
+    {
+      'Date':           formatDateShort(day.date),
+      'Shift':          day.shift || '',
+      'Total ouvriers': totalOuvriers,
+      'Présents':       presents,
+      'Absents':        absents
+    }
   ];
 
-  const wsEff = XLSX.utils.json_to_sheet(effectifRows, {header: ['Date','Shift','Total ouvriers','Présents','Absents']});
+  const wsEff = XLSX.utils.json_to_sheet(effectifRows, {
+    header: ['Date','Shift','Total ouvriers','Présents','Absents']
+  });
   wsEff['!cols'] = [{wch:14},{wch:12},{wch:16},{wch:12},{wch:12}];
 
   const wb = XLSX.utils.book_new();
