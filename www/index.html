@@ -834,32 +834,42 @@ document.addEventListener('touchstart', function(e){
   if(!e.target.closest('.ac-list') && !e.target.closest('input[data-ac]')) acHideAll();
 }, {passive:true});
 
-/* Android/Capacitor touch fallback: some WebViews do not reliably promote
-   taps on dynamically-rendered buttons to click events. Keep the normal
-   click behavior, but execute the button's inline action after a short
-   delay only when no native click arrived. */
+/* Android/Capacitor touch fallback — safe tap handling
+   Do not treat a finger movement/scroll as a click, and suppress the
+   delayed native click when the fallback had to execute the action. */
 (function installAndroidTapFallback(){
-  let lastNativeClick = 0;
-  document.addEventListener('click', function(e){
-    if(e.target && e.target.closest && e.target.closest('button')) lastNativeClick = Date.now();
-  }, true);
-  let touchStartX=0, touchStartY=0;
+  let touchStartX=0, touchStartY=0, moved=false, fallbackHandledBtn=null;
+  const MOVE_TOLERANCE=12;
   document.addEventListener('touchstart', function(e){
-    if(e.touches && e.touches[0]){ touchStartX=e.touches[0].clientX; touchStartY=e.touches[0].clientY; }
-  }, {passive:true});
+    const t=e.touches && e.touches[0];
+    if(!t) return;
+    touchStartX=t.clientX; touchStartY=t.clientY; moved=false;
+  }, {passive:true, capture:true});
+  document.addEventListener('touchmove', function(e){
+    const t=e.touches && e.touches[0];
+    if(!t) return;
+    if(Math.abs(t.clientX-touchStartX)>MOVE_TOLERANCE || Math.abs(t.clientY-touchStartY)>MOVE_TOLERANCE) moved=true;
+  }, {passive:true, capture:true});
+  document.addEventListener('click', function(e){
+    const btn=e.target && e.target.closest ? e.target.closest('button') : null;
+    if(btn && btn===fallbackHandledBtn){
+      e.preventDefault(); e.stopImmediatePropagation(); fallbackHandledBtn=null;
+    }
+  }, true);
   document.addEventListener('touchend', function(e){
-    const btn = e.target && e.target.closest ? e.target.closest('button') : null;
-    if(!btn || btn.disabled) return;
-    const t=e.changedTouches && e.changedTouches[0];
-    if(t && Math.hypot(t.clientX-touchStartX,t.clientY-touchStartY)>10) return;
+    const btn=e.target && e.target.closest ? e.target.closest('button') : null;
+    if(!btn || btn.disabled || moved) return;
+    const code=btn.getAttribute('onclick');
+    if(!code) return;
     setTimeout(function(){
-      if(Date.now() - lastNativeClick < 500) return;
-      const code = btn.getAttribute('onclick');
-      if(!code) return;
-      try { Function(code).call(btn); lastNativeClick = Date.now(); }
-      catch(err) { console.error('Android tap fallback:', err); }
-    }, 350);
-  }, {passive:true});
+      if(moved) return;
+      try {
+        fallbackHandledBtn=btn;
+        Function(code).call(btn);
+        setTimeout(function(){ if(fallbackHandledBtn===btn) fallbackHandledBtn=null; }, 700);
+      } catch(err) { console.error('Android tap fallback:', err); fallbackHandledBtn=null; }
+    }, 280);
+  }, {passive:true, capture:true});
 })();
 
 /* ============================================================
@@ -2356,15 +2366,9 @@ document.addEventListener('input', function(e){
     if(wrap){ e.preventDefault(); e.stopPropagation(); if(owner===wrap && popup && popup.classList.contains('open')) closePopup(); else openPopup(wrap); return; }
     if(!e.target.closest || !e.target.closest('#refPopupList')) closePopup();
   },true);
-  let refTouchX=0, refTouchY=0;
-  document.addEventListener('touchstart',function(e){
-    if(e.touches && e.touches[0]){ refTouchX=e.touches[0].clientX; refTouchY=e.touches[0].clientY; }
-  },{passive:true,capture:true});
   document.addEventListener('touchend',function(e){
     const wrap=e.target.closest && e.target.closest('.ref-select-wrap');
     if(!wrap) return;
-    const t=e.changedTouches && e.changedTouches[0];
-    if(t && Math.hypot(t.clientX-refTouchX,t.clientY-refTouchY)>10) return;
     e.preventDefault();
     e.stopPropagation();
     if(owner===wrap && popup && popup.classList.contains('open')) closePopup();
@@ -2417,15 +2421,7 @@ document.addEventListener('input', function(e){
     else openStatusPopup(sel);
   }
   document.addEventListener('click',handle,true);
-  let statTouchX=0, statTouchY=0;
-  document.addEventListener('touchstart',function(e){
-    if(e.touches && e.touches[0]){ statTouchX=e.touches[0].clientX; statTouchY=e.touches[0].clientY; }
-  },{passive:true,capture:true});
-  document.addEventListener('touchend',function(e){
-    const t=e.changedTouches && e.changedTouches[0];
-    if(t && Math.hypot(t.clientX-statTouchX,t.clientY-statTouchY)>10) return;
-    handle(e);
-  },{passive:false,capture:true});
+  document.addEventListener('touchend',handle,{passive:false,capture:true});
 })();
 </script>
 </body>
