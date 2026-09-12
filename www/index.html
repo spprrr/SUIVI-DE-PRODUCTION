@@ -184,6 +184,17 @@
 }
 .cycle-real-field{
 }
+
+
+/* Simple popup lists: keep the closed fields exactly like the original selectors. */
+.ref-select-wrap{position:relative;width:100%;cursor:pointer;}
+.ref-select-wrap .ref-select{pointer-events:none;}
+.ref-popup-list{position:fixed;z-index:99999;display:none;min-width:190px;max-width:calc(100vw - 24px);max-height:52vh;overflow:auto;background:#fff;border:1px solid #e1e5eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:5px;}
+.ref-popup-list.open{display:block;}
+.ref-popup-option{padding:10px 11px;border-radius:7px;font-size:14px;font-weight:600;color:#30343b;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ref-popup-option + .ref-popup-option{margin-top:2px;}
+.ref-popup-option:active,.ref-popup-option:hover{background:#f1f3f6;}
+.ref-popup-option.selected{background:#e9edf2;font-weight:800;}
 </style>
 </style>
 </style>
@@ -194,20 +205,27 @@
 </style>
 
 <style>
+.ref-select-wrap{position:relative;width:100%;}
 .ref-select{
-  width:100%;
-  min-height:38px;
-  box-sizing:border-box;
-  padding:7px 30px 7px 10px;
-  border:1px solid var(--border,#d8d8d8);
-  border-radius:10px;
-  background:var(--card,#fff);
-  color:inherit;
-  font:inherit;
-  font-size:14px;
-  outline:none;
+  width:100%;min-height:38px;box-sizing:border-box;
+  padding:7px 9px;border:1px solid #d9dee7;border-radius:8px;
+  background:#fff;color:var(--text,#20242b);font:inherit;font-size:14px;
+  font-weight:600;outline:none;
 }
-.ref-select:focus{border-color:#888;}
+
+</style>
+
+<style>
+/* Status popup: En marche / Arrêt total, centered on screen in both templates. */
+.status-popup-select{cursor:pointer;}
+.status-popup-select.status-popup-hidden{pointer-events:none;}
+.status-popup-overlay{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.18);padding:20px;}
+.status-popup-overlay.open{display:flex;}
+.status-popup-box{width:min(360px,calc(100vw - 40px));background:#fff;border:1px solid #e1e5eb;border-radius:12px;box-shadow:0 12px 30px rgba(0,0,0,.16);padding:7px;}
+.status-popup-option{padding:13px 14px;border-radius:8px;font-size:15px;font-weight:700;color:#30343b;text-align:center;line-height:1.25;}
+.status-popup-option + .status-popup-option{margin-top:3px;}
+.status-popup-option:active,.status-popup-option:hover{background:#f1f3f6;}
+.status-popup-option.selected{background:#e9edf2;font-weight:800;}
 </style>
 </head>
 <body>
@@ -825,10 +843,15 @@ document.addEventListener('touchstart', function(e){
   document.addEventListener('click', function(e){
     if(e.target && e.target.closest && e.target.closest('button')) lastNativeClick = Date.now();
   }, true);
+  let touchStartX=0, touchStartY=0;
+  document.addEventListener('touchstart', function(e){
+    if(e.touches && e.touches[0]){ touchStartX=e.touches[0].clientX; touchStartY=e.touches[0].clientY; }
+  }, {passive:true});
   document.addEventListener('touchend', function(e){
     const btn = e.target && e.target.closest ? e.target.closest('button') : null;
     if(!btn || btn.disabled) return;
-    const now = Date.now();
+    const t=e.changedTouches && e.changedTouches[0];
+    if(t && Math.hypot(t.clientX-touchStartX,t.clientY-touchStartY)>10) return;
     setTimeout(function(){
       if(Date.now() - lastNativeClick < 500) return;
       const code = btn.getAttribute('onclick');
@@ -1297,46 +1320,42 @@ function mouleForId(mid){ return refs.moules.find(x=>x.id===mid) || null; }
 
 
 function refSelectHTML(o){
-  const field = o.field;
-  const mid = o.machineId;
-  const isSec = o.secondary ? true : false;
-  const idx = (o.index !== undefined && o.index !== null) ? o.index : null;
-  let options = [];
-  let selected = String(o.value || '');
-
-  if(field === 'couleur'){
-    options = refs.couleurs.map(c => ({v:String(c.id), l:String(c.nom)}));
-    selected = resolveColorId(selected);
-  } else if(field === 'matiere'){
-    let mouleId = null;
-    const day = ensureToday();
-    if(day && mid && day.machines[mid]){
-      const mm = day.machines[mid];
-      if(isSec){
-        const arr = mm.moulesAvances || [];
-        mouleId = arr[idx] ? arr[idx].mouleId : null;
-      } else {
-        mouleId = mm.mouleId;
-      }
+  const field=o.field, mid=o.machineId, isSec=!!o.secondary;
+  const idx=(o.index!==undefined&&o.index!==null)?o.index:null;
+  let options=[], selected=String(o.value||'');
+  if(field==='couleur'){
+    options=refs.couleurs.map(c=>({v:String(c.id),l:String(c.nom)}));
+    selected=resolveColorId(selected);
+  }else if(field==='matiere'){
+    let mouleId=null, day=ensureToday();
+    if(day&&mid&&day.machines[mid]){
+      const mm=day.machines[mid];
+      if(isSec){const arr=mm.moulesAvances||[];mouleId=arr[idx]?arr[idx].mouleId:null;}
+      else mouleId=mm.mouleId;
     }
-    const mo = mouleId ? refs.moules.find(x => x.id === mouleId) : null;
-    // Avec un moule sélectionné : seulement ses matières.
-    // Sans moule : toutes les matières de référence.
-    // Moule sans matière : liste vide.
-    const vals = mo ? (Array.isArray(mo.materiaux) ? mo.materiaux : []) : refs.materiaux;
-    options = vals.map(v => ({v:String(v), l:String(v)}));
+    const mo=mouleId?refs.moules.find(x=>x.id===mouleId):null;
+    const vals=mo?(Array.isArray(mo.materiaux)?mo.materiaux:[]):refs.materiaux;
+    options=vals.map(v=>({v:String(v),l:String(v)}));
   }
-
-  const attrs = `id="${o.id}" data-ref-field="${field}" data-machine="${mid}"${o.secondary ? ' data-secondary="1"' : ''}${idx !== null ? ` data-index="${idx}"` : ''}`;
-  const opts = options.map(x => `<option value="${esc(x.v)}"${String(x.v)===String(selected)?' selected':''}>${esc(x.l)}</option>`).join('');
-  const placeholder = field === 'matiere' ? 'Choisir une matière…' : 'Choisir une couleur…';
-  return `<select ${attrs} class="ref-select" onchange="refSelectChange(this)" style="${o.style||''}">
-    <option value="">${placeholder}</option>${opts}
-  </select>`;
+  const attrs=`id="${o.id}" data-ref-field="${field}" data-machine="${mid}"${o.secondary?' data-secondary="1"':''}${idx!==null?` data-index="${idx}"`:''}`;
+  const placeholder=field==='matiere'?'Choisir une matière…':'Choisir une couleur…';
+  return `<div class="ref-select-wrap">
+    <select ${attrs} class="ref-select" onchange="refSelectChange(this)" style="${o.style||''}">
+      <option value="">${placeholder}</option>
+      ${options.map(x=>`<option value="${esc(x.v)}"${String(x.v)===String(selected)?' selected':''}>${esc(x.l)}</option>`).join('')}
+    </select>
+  </div>`;
 }
 
 function refSelectChange(el){
   const field = el.dataset.refField;
+  if(field === 'couleur'){
+    const sw = document.getElementById(el.id + '_swatch');
+    if(sw){
+      const c = refs.couleurs.find(x => String(x.id) === String(el.value));
+      sw.style.background = (c && c.hex) ? c.hex : '#e5e7eb';
+    }
+  }
   const machineId = el.dataset.machine;
   const isSecondary = el.dataset.secondary === '1';
   const secIdx = isSecondary ? parseInt(el.dataset.index,10) : null;
@@ -1446,7 +1465,7 @@ function renderTourneeStep(){
           ${refSelectHTML({id:'f_couleur', field:'couleur', machineId:id, value: colorName(m.couleur)})}
         </div>
       </div>
-      <div><label>État</label><select id="f_statut" class="enhanced-select" onchange="onStatutT1Change('${id}', this.value)"><option value="marche" ${m.statut!=='arret_total'?'selected':''}>En marche</option><option value="arret_total" ${m.statut==='arret_total'?'selected':''}>Arrêt total</option></select></div>
+      <div><label>État</label><select id="f_statut" class="enhanced-select status-popup-select" onchange="onStatutT1Change('${id}', this.value)"><option value="marche" ${m.statut!=='arret_total'?'selected':''}>En marche</option><option value="arret_total" ${m.statut==='arret_total'?'selected':''}>Arrêt total</option></select></div>
       ${obsToggleHTML(id, m.observation, false, null)}
       <div class="hidden-section"><button class="hidden-toggle" onclick="toggleAdvanced('${id}')">+ Ajouter un 2ème moule</button>
         <div class="hidden-content" id="advanced_${id}"><div style="font-size:12px; color:var(--grey); margin-bottom:8px;">Le nom et les pièces théoriques sont récupérés automatiquement.</div>
@@ -1476,7 +1495,7 @@ function renderTourneeStep(){
         <div><label style="font-size:10px;">Cycle Théo</label><input id="f_cycle_theorique_t2" type="text" value="${moule && moule.cycleReference ? esc(moule.cycleReference) : ''}" readonly></div>
         <div><label style="font-size:10px;">Cycle</label><input id="f_cycle_t2" class="cycle-real-field" type="number" min="0" step="0.1" value="${esc(m.cycle||'')}" placeholder="À saisir"></div>
       </div>
-      <div style="margin-top:12px;"><label>État</label><select id="f_statut_t2" class="enhanced-select" style="width:auto;min-width:120px;font-size:13px;padding:6px 8px;" onchange="onStatutT2Change('${id}', this.value)"><option value="marche" ${m.statut!=='arret_total'?'selected':''}>En marche</option><option value="arret_total" ${m.statut==='arret_total'?'selected':''}>Arrêt total</option></select></div>
+      <div style="margin-top:12px;"><label>État</label><select id="f_statut_t2" class="enhanced-select status-popup-select" style="width:auto;min-width:120px;font-size:13px;padding:6px 8px;" onchange="onStatutT2Change('${id}', this.value)"><option value="marche" ${m.statut!=='arret_total'?'selected':''}>En marche</option><option value="arret_total" ${m.statut==='arret_total'?'selected':''}>Arrêt total</option></select></div>
       <div class="setup-inline">
         <div class="ac-wrap">
           <label>Matière</label>
@@ -2296,5 +2315,118 @@ document.addEventListener('input', function(e){
 });
 </script>
 
+
+<script>
+/* Material/color popup: the closed selector keeps its original appearance; only the opened list is customized. */
+(function(){
+  let popup=null, owner=null;
+  function closePopup(){ if(popup){ popup.classList.remove('open'); popup.innerHTML=''; } owner=null; }
+  function ensurePopup(){
+    if(popup) return popup;
+    popup=document.createElement('div'); popup.className='ref-popup-list'; popup.id='refPopupList';
+    document.body.appendChild(popup);
+    popup.addEventListener('click',function(e){
+      const opt=e.target.closest('.ref-popup-option'); if(!opt || !owner) return;
+      const sel=owner.querySelector('select.ref-select'); if(!sel) return;
+      sel.value=opt.dataset.value || '';
+      sel.dispatchEvent(new Event('change',{bubbles:true}));
+      closePopup();
+    });
+    return popup;
+  }
+  function openPopup(wrap){
+    const sel=wrap.querySelector('select.ref-select'); if(!sel) return;
+    const options=Array.from(sel.options).filter(o=>!o.disabled);
+    const box=ensurePopup(); owner=wrap;
+    box.innerHTML=options.map(o=>`<div class="ref-popup-option ${String(o.value)===String(sel.value)?'selected':''}" data-value="${String(o.value).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}">${String(o.textContent).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`).join('');
+    const r=wrap.getBoundingClientRect();
+    box.style.minWidth=Math.max(220,Math.min(r.width,360))+'px';
+    box.style.left=Math.max(12,(window.innerWidth-box.offsetWidth)/2)+'px';
+    box.classList.add('open');
+    requestAnimationFrame(()=>{
+      const h=box.offsetHeight;
+      let top=(window.innerHeight-h)/2;
+      top=Math.max(10,Math.min(top,window.innerHeight-h-10));
+      box.style.top=top+'px';
+      box.style.left=Math.max(12,(window.innerWidth-box.offsetWidth)/2)+'px';
+    });
+  }
+  document.addEventListener('click',function(e){
+    const wrap=e.target.closest && e.target.closest('.ref-select-wrap');
+    if(wrap){ e.preventDefault(); e.stopPropagation(); if(owner===wrap && popup && popup.classList.contains('open')) closePopup(); else openPopup(wrap); return; }
+    if(!e.target.closest || !e.target.closest('#refPopupList')) closePopup();
+  },true);
+  let refTouchX=0, refTouchY=0;
+  document.addEventListener('touchstart',function(e){
+    if(e.touches && e.touches[0]){ refTouchX=e.touches[0].clientX; refTouchY=e.touches[0].clientY; }
+  },{passive:true,capture:true});
+  document.addEventListener('touchend',function(e){
+    const wrap=e.target.closest && e.target.closest('.ref-select-wrap');
+    if(!wrap) return;
+    const t=e.changedTouches && e.changedTouches[0];
+    if(t && Math.hypot(t.clientX-refTouchX,t.clientY-refTouchY)>10) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(owner===wrap && popup && popup.classList.contains('open')) closePopup();
+    else openPopup(wrap);
+  },{passive:false,capture:true});
+  window.addEventListener('resize',closePopup);
+  window.addEventListener('scroll',closePopup,true);
+})();
+</script>
+
+<script>
+(function(){
+  let overlay=null, owner=null;
+  function closeStatusPopup(){
+    if(overlay){ overlay.classList.remove('open'); overlay.innerHTML=''; }
+    if(owner) owner.classList.remove('status-popup-hidden');
+    owner=null;
+  }
+  function ensureStatusPopup(){
+    if(overlay) return overlay;
+    overlay=document.createElement('div');
+    overlay.className='status-popup-overlay';
+    overlay.id='statusPopupOverlay';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click',function(e){
+      if(e.target===overlay){ closeStatusPopup(); return; }
+      const opt=e.target.closest('.status-popup-option');
+      if(!opt || !owner) return;
+      owner.value=opt.dataset.value || '';
+      owner.dispatchEvent(new Event('change',{bubbles:true}));
+      closeStatusPopup();
+    });
+    return overlay;
+  }
+  function openStatusPopup(sel){
+    const box=ensureStatusPopup(); owner=sel; sel.classList.add('status-popup-hidden');
+    const options=Array.from(sel.options).filter(o=>!o.disabled);
+    box.innerHTML='<div class="status-popup-box">'+options.map(o=>{
+      const value=String(o.value).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const text=String(o.textContent).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return '<div class="status-popup-option '+(String(o.value)===String(sel.value)?'selected':'')+'" data-value="'+value+'">'+text+'</div>';
+    }).join('')+'</div>';
+    box.classList.add('open');
+  }
+  function handle(e){
+    const sel=e.target && e.target.closest ? e.target.closest('select.status-popup-select') : null;
+    if(!sel) return;
+    e.preventDefault(); e.stopPropagation();
+    if(owner===sel && overlay && overlay.classList.contains('open')) closeStatusPopup();
+    else openStatusPopup(sel);
+  }
+  document.addEventListener('click',handle,true);
+  let statTouchX=0, statTouchY=0;
+  document.addEventListener('touchstart',function(e){
+    if(e.touches && e.touches[0]){ statTouchX=e.touches[0].clientX; statTouchY=e.touches[0].clientY; }
+  },{passive:true,capture:true});
+  document.addEventListener('touchend',function(e){
+    const t=e.changedTouches && e.changedTouches[0];
+    if(t && Math.hypot(t.clientX-statTouchX,t.clientY-statTouchY)>10) return;
+    handle(e);
+  },{passive:false,capture:true});
+})();
+</script>
 </body>
 </html>
