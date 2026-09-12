@@ -102,7 +102,7 @@
   .moule-db-grid input{ width:100%; box-sizing:border-box; margin:0; padding:8px; }
   .moule-lookup{ display:grid; grid-template-columns:1.4fr .8fr .8fr; gap:8px; align-items:end; }
   .moule-name-sub{ font-size:13px; font-weight:300; color:var(--ink); margin-top:3px; overflow-wrap:break-word; }
-  input[readonly]{ background:var(--pale); }
+  .moule-lookup input[readonly]{ background:var(--pale); }
   .resume-buttons{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
   .resume-buttons button{ flex:1; min-width:150px; }
   .atelier-summary{ padding:12px 0; border-bottom:1px solid var(--line); }
@@ -174,40 +174,6 @@
   .rp-sign > div{ flex:1 1 140px; min-width:0; text-align:center; }
   .rp-sign span{ display:block; font-size:11px; font-weight:700; text-transform:uppercase; margin-bottom:10px; }
   .rp-sign input{ text-align:center; border:none; border-bottom:1px solid var(--ink); font-weight:600; font-size:13px; padding:6px 2px; min-width:0; }
-
-<style>
-
-
-<style>
-.cycle-theo-field{
-  background:var(--pale)!important;
-}
-.cycle-real-field{
-}
-</style>
-</style>
-</style>
-
-<style>
-.rp-logo-cell{display:flex;align-items:center;justify-content:center;min-height:62px;}
-.rp-company-logo{display:block;max-width:110px;max-height:62px;width:auto;height:auto;object-fit:contain;margin:0 auto;}
-</style>
-
-<style>
-.ref-select{
-  width:100%;
-  min-height:38px;
-  box-sizing:border-box;
-  padding:7px 30px 7px 10px;
-  border:1px solid var(--border,#d8d8d8);
-  border-radius:10px;
-  background:var(--card,#fff);
-  color:inherit;
-  font:inherit;
-  font-size:14px;
-  outline:none;
-}
-.ref-select:focus{border-color:#888;}
 </style>
 </head>
 <body>
@@ -665,9 +631,7 @@ function acMatierePool(inputEl){
   else { mouleId = m.mouleId; }
   if(mouleId){
     const mo = refs.moules.find(x => x.id === mouleId);
-    if(mo){
-      return Array.isArray(mo.materiaux) ? mo.materiaux : [];
-    }
+    if(mo && Array.isArray(mo.materiaux) && mo.materiaux.length > 0) return mo.materiaux;
   }
   return refs.materiaux;
 }
@@ -762,12 +726,12 @@ function acPick(inputEl, item){
         const cEl = document.getElementById('f_cycle_s' + secIdx);
         if(cEl) cEl.value = moule.cycleReference;
       }
-      const pool = Array.isArray(moule.materiaux) ? moule.materiaux : [];
+      const pool = (Array.isArray(moule.materiaux) && moule.materiaux.length > 0) ? moule.materiaux : refs.materiaux;
       if(pool.length === 1){
         m.moulesAvances[secIdx].matiere = pool[0];
         const matEl = document.getElementById('f_matiere_s' + secIdx);
         if(matEl) matEl.value = pool[0];
-      } else if(!pool.includes(m.moulesAvances[secIdx].matiere)){
+      } else if(m.moulesAvances[secIdx].matiere && !pool.includes(m.moulesAvances[secIdx].matiere)){
         m.moulesAvances[secIdx].matiere = '';
         const matEl = document.getElementById('f_matiere_s' + secIdx);
         if(matEl) matEl.value = '';
@@ -780,14 +744,12 @@ function acPick(inputEl, item){
     if(inputEl.id === 'f_moule_num'){ lookupMoule(machineId, moule.numero); return; }
     if(inputEl.id === 'f_moule_t2'){
       m.mouleId = moule.id; config[machineId].mouleId = moule.id;
-      const cycleEl = document.getElementById('f_cycle_theorique_t2');
-      if(cycleEl) cycleEl.value = (moule.cycleReference !== '' && moule.cycleReference != null) ? moule.cycleReference : '';
-      const pool = Array.isArray(moule.materiaux) ? moule.materiaux : [];
+      const pool = (Array.isArray(moule.materiaux) && moule.materiaux.length > 0) ? moule.materiaux : refs.materiaux;
       if(pool.length === 1){
         m.matiere = pool[0];
         const matEl = document.getElementById('f_matiere_t2');
         if(matEl) matEl.value = pool[0];
-      } else if(!pool.includes(m.matiere)){
+      } else if(m.matiere && !pool.includes(m.matiere)){
         m.matiere = '';
         const matEl = document.getElementById('f_matiere_t2');
         if(matEl) matEl.value = '';
@@ -954,18 +916,9 @@ function renderMoulesTab(el){
     </div>`;
   });
   html = `<div style="padding:10px 0 4px;color:var(--grey);font-size:12px;">Base de référence des moules.</div>
-    <div style="margin:8px 0;"><input id="moulesSearch" type="search" placeholder="🔍 Rechercher par N° ou nom du moule…" autocomplete="off" oninput="filterMoulesTab(this.value)" style="width:100%;box-sizing:border-box;"></div>
     <div class="form-row"><button class="btn-secondary" onclick="importMoulesExcel()">📥 Importer Excel</button><button class="btn-secondary" onclick="downloadReferenceTemplate('moules')">📄 Modèle</button><button class="btn-primary" onclick="addMouleModal()">+ Ajouter</button></div>` + html;
   el.innerHTML = html;
 }
-function filterMoulesTab(q){
-  const query = String(q || '').trim().toLowerCase();
-  document.querySelectorAll('#paramContent .param-list .param-item').forEach(item=>{
-    const text=item.textContent.toLowerCase();
-    item.style.display=(!query || text.includes(query)) ? '' : 'none';
-  });
-}
-
 function openMateriauxModal(mouleIndex){
   const m = refs.moules[mouleIndex]; if(!m) return;
   if(!Array.isArray(m.materiaux)) m.materiaux = [];
@@ -1261,66 +1214,6 @@ function startTournee(n){
 }
 function mouleForId(mid){ return refs.moules.find(x=>x.id===mid) || null; }
 
-
-function refSelectHTML(o){
-  const field = o.field;
-  const mid = o.machineId;
-  const isSec = o.secondary ? true : false;
-  const idx = (o.index !== undefined && o.index !== null) ? o.index : null;
-  let options = [];
-  let selected = String(o.value || '');
-
-  if(field === 'couleur'){
-    options = refs.couleurs.map(c => ({v:String(c.id), l:String(c.nom)}));
-    selected = resolveColorId(selected);
-  } else if(field === 'matiere'){
-    let mouleId = null;
-    const day = ensureToday();
-    if(day && mid && day.machines[mid]){
-      const mm = day.machines[mid];
-      if(isSec){
-        const arr = mm.moulesAvances || [];
-        mouleId = arr[idx] ? arr[idx].mouleId : null;
-      } else {
-        mouleId = mm.mouleId;
-      }
-    }
-    const mo = mouleId ? refs.moules.find(x => x.id === mouleId) : null;
-    // Avec un moule sélectionné : seulement ses matières.
-    // Sans moule : toutes les matières de référence.
-    // Moule sans matière : liste vide.
-    const vals = mo ? (Array.isArray(mo.materiaux) ? mo.materiaux : []) : refs.materiaux;
-    options = vals.map(v => ({v:String(v), l:String(v)}));
-  }
-
-  const attrs = `id="${o.id}" data-ref-field="${field}" data-machine="${mid}"${o.secondary ? ' data-secondary="1"' : ''}${idx !== null ? ` data-index="${idx}"` : ''}`;
-  const opts = options.map(x => `<option value="${esc(x.v)}"${String(x.v)===String(selected)?' selected':''}>${esc(x.l)}</option>`).join('');
-  const placeholder = field === 'matiere' ? 'Choisir une matière…' : 'Choisir une couleur…';
-  return `<select ${attrs} class="ref-select" onchange="refSelectChange(this)" style="${o.style||''}">
-    <option value="">${placeholder}</option>${opts}
-  </select>`;
-}
-
-function refSelectChange(el){
-  const field = el.dataset.refField;
-  const machineId = el.dataset.machine;
-  const isSecondary = el.dataset.secondary === '1';
-  const secIdx = isSecondary ? parseInt(el.dataset.index,10) : null;
-  const day = ensureToday();
-  if(!day || !machineId || !day.machines[machineId]) return;
-  const m = day.machines[machineId];
-
-  if(isSecondary){
-    if(!m.moulesAvances || !m.moulesAvances[secIdx]) return;
-    if(field === 'matiere') m.moulesAvances[secIdx].matiere = el.value;
-    if(field === 'couleur') m.moulesAvances[secIdx].couleur = resolveColorId(el.value);
-  } else {
-    if(field === 'matiere') { m.matiere = el.value; config[machineId].matiere = el.value; }
-    if(field === 'couleur') { m.couleur = resolveColorId(el.value); config[machineId].couleur = m.couleur; }
-  }
-  saveDays(); saveConfig();
-}
-
 function acInputHTML(o){
   const sec = o.secondary ? ' data-secondary="1"' : '';
   const idx = (o.index !== undefined && o.index !== null) ? ` data-index="${o.index}"` : '';
@@ -1329,18 +1222,6 @@ function acInputHTML(o){
     oninput="acShow(this)" onfocus="acShow(this)" onblur="setTimeout(()=>acHide(this),250)" onkeydown="acKeyNav(this,event)">`;
 }
 
-
-function refreshMaterialSelect(selectId, moule){
-  const el = document.getElementById(selectId);
-  if(!el) return;
-  const current = el.value;
-  const vals = moule
-    ? (Array.isArray(moule.materiaux) ? moule.materiaux : [])
-    : refs.materiaux;
-  el.innerHTML = '<option value="">Choisir une matière…</option>' +
-    vals.map(v => `<option value="${esc(String(v))}">${esc(String(v))}</option>`).join('');
-  if(vals.includes(current)) el.value = current;
-}
 function lookupMoule(mid, numero){
   const day = ensureToday(), m = day.machines[mid];
   const found = refs.moules.find(x=>String(x.numero).toLowerCase()===String(numero).trim().toLowerCase()) || refs.moules.find(x=>String(x.id)===String(numero).trim());
@@ -1394,22 +1275,21 @@ function renderTourneeStep(){
         <div><label style="font-size:10px;">Pièces théoriques</label><input id="f_moule_theorique" value="${mouleForId(m.mouleId)?.piecesParMoule||''}" readonly></div>
         <div><label style="font-size:10px;">Pièces réelles</label><input id="f_moule_reel" type="number" min="0" value="${mouleForId(m.mouleId)?.piecesReelles||''}" placeholder="À saisir"></div>
       </div>
-      <div class="setup-inline" style="grid-template-columns:minmax(0,1.75fr) minmax(62px,.65fr) minmax(62px,.65fr); gap:6px; align-items:end;">
+      <div class="setup-inline">
         <div class="ac-wrap">
-          <label style="font-size:10px;">Nom de l'opérateur</label>
+          <label>Nom de l'opérateur</label>
           ${acInputHTML({id:'f_operateur', field:'operateur', machineId:id, value: m.operateur||'', placeholder:'Tapez 2 lettres…'})}
         </div>
-        <div><label style="font-size:10px;">Cycle Théo</label><input id="f_cycle_theorique" type="text" value="${m.mouleId && mouleForId(m.mouleId) && mouleForId(m.mouleId).cycleReference ? esc(mouleForId(m.mouleId).cycleReference) : ''}" readonly></div>
-        <div><label style="font-size:10px;">Cycle</label><input id="f_cycle" class="cycle-real-field" type="number" min="0" step="0.1" value="${esc(m.cycle||'')}" placeholder="À saisir"></div>
+        <div><label>Cycle (secondes)</label><input id="f_cycle" type="number" min="0" step="0.1" value="${esc(m.cycle||'')}" placeholder="Ex. 25"></div>
       </div>
       <div class="setup-inline">
         <div class="ac-wrap">
           <label>Matière</label>
-          ${refSelectHTML({id:'f_matiere', field:'matiere', machineId:id, value: m.matiere||''})}
+          ${acInputHTML({id:'f_matiere', field:'matiere', machineId:id, value: m.matiere||'', placeholder:'Tapez 2 lettres…'})}
         </div>
         <div class="ac-wrap">
           <label>Couleur</label>
-          ${refSelectHTML({id:'f_couleur', field:'couleur', machineId:id, value: colorName(m.couleur)})}
+          ${acInputHTML({id:'f_couleur', field:'couleur', machineId:id, value: colorName(m.couleur), placeholder:'Tapez 2 lettres…'})}
         </div>
       </div>
       <div><label>État</label><select id="f_statut" class="enhanced-select" onchange="onStatutT1Change('${id}', this.value)"><option value="marche" ${m.statut!=='arret_total'?'selected':''}>En marche</option><option value="arret_total" ${m.statut==='arret_total'?'selected':''}>Arrêt total</option></select></div>
@@ -1434,25 +1314,21 @@ function renderTourneeStep(){
       <div class="ac-wrap">
         ${acInputHTML({id:'f_moule_t2', field:'moule', machineId:id, value: moule?moule.numero:'', placeholder:'Tapez 2 lettres/chiffres…', style:'font-size:16px;font-weight:800;'})}
       </div>
-      <div class="setup-inline" style="grid-template-columns:minmax(0,1.75fr) minmax(62px,.65fr) minmax(62px,.65fr); gap:6px; align-items:end; margin-top:10px;">
+      <div style="margin-top:12px;"><label>État</label><select id="f_statut_t2" class="enhanced-select" style="width:auto;min-width:120px;font-size:13px;padding:6px 8px;" onchange="onStatutT2Change('${id}', this.value)"><option value="marche" ${m.statut!=='arret_total'?'selected':''}>En marche</option><option value="arret_total" ${m.statut==='arret_total'?'selected':''}>Arrêt total</option></select></div>
+      <div class="setup-inline" style="margin-top:8px;">
         <div class="ac-wrap">
-          <label style="font-size:10px;">Nom de l'opérateur</label>
+          <label>Nom de l'opérateur</label>
           ${acInputHTML({id:'f_operateur_t2', field:'operateur', machineId:id, value: m.operateur||'', placeholder:'Tapez 2 lettres…'})}
         </div>
-        <div><label style="font-size:10px;">Cycle Théo</label><input id="f_cycle_theorique_t2" type="text" value="${moule && moule.cycleReference ? esc(moule.cycleReference) : ''}" readonly></div>
-        <div><label style="font-size:10px;">Cycle</label><input id="f_cycle_t2" class="cycle-real-field" type="number" min="0" step="0.1" value="${esc(m.cycle||'')}" placeholder="À saisir"></div>
-      </div>
-      <div style="margin-top:12px;"><label>État</label><select id="f_statut_t2" class="enhanced-select" style="width:auto;min-width:120px;font-size:13px;padding:6px 8px;" onchange="onStatutT2Change('${id}', this.value)"><option value="marche" ${m.statut!=='arret_total'?'selected':''}>En marche</option><option value="arret_total" ${m.statut==='arret_total'?'selected':''}>Arrêt total</option></select></div>
-      <div class="setup-inline">
         <div class="ac-wrap">
           <label>Matière</label>
-          ${refSelectHTML({id:'f_matiere_t2', field:'matiere', machineId:id, value: m.matiere||''})}
+          ${acInputHTML({id:'f_matiere_t2', field:'matiere', machineId:id, value: m.matiere||'', placeholder:'Tapez 2 lettres…'})}
         </div>
       </div>
       <div class="setup-inline">
         <div class="ac-wrap">
           <label>Couleur</label>
-          ${refSelectHTML({id:'f_couleur_t2', field:'couleur', machineId:id, value: colorName(m.couleur)})}
+          ${acInputHTML({id:'f_couleur_t2', field:'couleur', machineId:id, value: colorName(m.couleur), placeholder:'Tapez 2 lettres…'})}
         </div>
       </div>
       <label>Quantité produite — moule principal</label><input id="f_production" type="number" min="0" value="${m.production}" oninput="updateT2Rate('${id}')">
@@ -1519,15 +1395,14 @@ function renderAdvancedT2(id){
       </div>
       <div class="form-row">
         <div style="flex:1" class="ac-wrap"><label style="font-size:10px;">Matière</label>
-          ${refSelectHTML({id:'f_matiere_s'+i, field:'matiere', machineId:id, value: ma.matiere||'', secondary:true, index:i})}
+          ${acInputHTML({id:'f_matiere_s'+i, field:'matiere', machineId:id, value: ma.matiere||'', placeholder:'Tapez 2 lettres…', secondary:true, index:i})}
         </div>
         <div style="flex:1" class="ac-wrap"><label style="font-size:10px;">Couleur</label>
-          ${refSelectHTML({id:'f_couleur_s'+i, field:'couleur', machineId:id, value: colorName(ma.couleur), secondary:true, index:i})}
+          ${acInputHTML({id:'f_couleur_s'+i, field:'couleur', machineId:id, value: colorName(ma.couleur), placeholder:'Tapez 2 lettres…', secondary:true, index:i})}
         </div>
       </div>
       <div class="form-row">
-        <div style="flex:1"><label style="font-size:10px;">Cycle Théo</label><input type="text" id="f_cycle_theorique_s${i}" value="${mo && mo.cycleReference ? esc(mo.cycleReference) : ''}" readonly></div>
-        <div style="flex:1"><label style="font-size:10px;">Cycle (secondes)</label><input type="number" id="f_cycle_s${i}" class="cycle-real-field" min="0" step="0.1" value="${esc(ma.cycle||'')}" onchange="updateAdvancedMoule('${id}',${i},'cycle',this.value)" placeholder="Ex. 25"></div>
+        <div style="flex:1"><label style="font-size:10px;">Cycle (secondes)</label><input type="number" id="f_cycle_s${i}" min="0" step="0.1" value="${esc(ma.cycle||'')}" onchange="updateAdvancedMoule('${id}',${i},'cycle',this.value)" placeholder="Ex. 25"></div>
       </div>
       <div class="form-row">
         <div style="flex:1"><label style="font-size:10px;">Quantité</label><input type="number" min="0" value="${esc(ma.production||'')}" onchange="updateAdvancedMoule('${id}',${i},'production',this.value)"></div>
@@ -1568,15 +1443,14 @@ function renderAdvancedMoules(id){
       </div>
       <div class="form-row">
         <div style="flex:1" class="ac-wrap"><label style="font-size:10px;">Matière</label>
-          ${refSelectHTML({id:'f_matiere_s'+i, field:'matiere', machineId:id, value: ma.matiere||'', secondary:true, index:i})}
+          ${acInputHTML({id:'f_matiere_s'+i, field:'matiere', machineId:id, value: ma.matiere||'', placeholder:'Tapez 2 lettres…', secondary:true, index:i})}
         </div>
         <div style="flex:1" class="ac-wrap"><label style="font-size:10px;">Couleur</label>
-          ${refSelectHTML({id:'f_couleur_s'+i, field:'couleur', machineId:id, value: colorName(ma.couleur), secondary:true, index:i})}
+          ${acInputHTML({id:'f_couleur_s'+i, field:'couleur', machineId:id, value: colorName(ma.couleur), placeholder:'Tapez 2 lettres…', secondary:true, index:i})}
         </div>
       </div>
       <div class="form-row">
-        <div style="flex:1"><label style="font-size:10px;">Cycle Théo</label><input type="text" id="f_cycle_theorique_s${i}" value="${mo && mo.cycleReference ? esc(mo.cycleReference) : ''}" readonly></div>
-        <div style="flex:1"><label style="font-size:10px;">Cycle (secondes)</label><input type="number" id="f_cycle_s${i}" class="cycle-real-field" min="0" step="0.1" value="${esc(ma.cycle||'')}" onchange="updateAdvancedMoule('${id}',${i},'cycle',this.value)" placeholder="Ex. 25"></div>
+        <div style="flex:1"><label style="font-size:10px;">Cycle (secondes)</label><input type="number" id="f_cycle_s${i}" min="0" step="0.1" value="${esc(ma.cycle||'')}" onchange="updateAdvancedMoule('${id}',${i},'cycle',this.value)" placeholder="Ex. 25"></div>
       </div>
       ${obsToggleHTML(id, ma.observation, true, i)}
     </div>`;
@@ -1610,4 +1484,633 @@ function updateAdvancedMoule(id, index, field, value){
 function removeAdvancedMoule(id, index){
   const day = ensureToday(), m = day.machines[id];
   if(!m.moulesAvances) return;
-  m.moulesAvances.splic
+  m.moulesAvances.splice(index, 1); saveDays();
+  if(currentTournee === 1) renderAdvancedMoules(id);
+  else renderAdvancedT2(id);
+}
+
+function renderArretsList(){
+  const el = document.getElementById('arretsList'); if(!el) return;
+  el.innerHTML = tempArrets.map((a,i)=>{
+    const missingCause = (parseFloat(a.duree)>0 && !a.cause);
+    const rowStyle = missingCause ? 'margin-top:8px;background:#fee2e2;border:1px solid #dc2626;border-radius:6px;padding:6px;' : 'margin-top:8px;';
+    return `<div class="row" style="${rowStyle}">
+      <select style="flex:0 0 78px;font-family:monospace;" onchange="tempArrets[${i}].cause=this.value; renderArretsList(); updateT2RateFromContext();"><option value="">—</option>${refs.causes.map(c => `<option value="${c}" ${a.cause===c?'selected':''}>${c}</option>`).join('')}</select>
+      <input type="number" step="0.1" min="0" placeholder="Heures" value="${a.duree||''}" style="flex:1;" oninput="tempArrets[${i}].duree=this.value; updateT2RateFromContext();">
+      <button type="button" class="btn-danger" onclick="removeArretRow(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+function updateT2RateFromContext(){ if(currentTournee === 2) updateT2Rate(machineIds[currentIndex]); }
+function addArretRow(){ tempArrets.push({cause:'', duree:''}); renderArretsList(); }
+function removeArretRow(i){ tempArrets.splice(i,1); if(tempArrets.length===0) tempArrets.push({cause:'', duree:''}); renderArretsList(); }
+
+function syncAdvancedMoulesFromInputs(id){
+  const day = ensureToday(), m = day.machines[id];
+  (m.moulesAvances||[]).forEach((ma, i)=>{
+    const inp = document.getElementById('f_moule_s'+i);
+    if(!inp) return;
+    const typed = String(inp.value||'').trim();
+    if(!typed) return;
+    const found = refs.moules.find(x=>String(x.numero).toLowerCase()===typed.toLowerCase()) || refs.moules.find(x=>String(x.id)===typed);
+    if(found && ma.mouleId !== found.id){
+      ma.mouleId = found.id;
+      if(found.cycleReference !== '' && found.cycleReference != null && !String(ma.cycle||'').trim()) ma.cycle = found.cycleReference;
+      const pool = Array.isArray(found.materiaux) && found.materiaux.length > 0 ? found.materiaux : refs.materiaux;
+      if(pool.length === 1) ma.matiere = pool[0];
+    }
+  });
+}
+function saveCurrentStep(){
+  const day = ensureToday(), id = machineIds[currentIndex], m = day.machines[id];
+  if(!m) return;
+  if(currentTournee === 1){
+    const mouleEl=document.getElementById('f_moule_num');
+    const typedMoule=mouleEl ? String(mouleEl.value||'').trim() : '';
+    const foundMoule=refs.moules.find(x=>String(x.id)===typedMoule) || refs.moules.find(x=>String(x.numero).toLowerCase()===typedMoule.toLowerCase());
+    m.mouleId = foundMoule ? foundMoule.id : null;
+    const opEl = document.getElementById('f_operateur'); if(opEl) m.operateur = opEl.value;
+    const cyEl = document.getElementById('f_cycle'); if(cyEl) m.cycle = cyEl.value;
+    const matEl = document.getElementById('f_matiere'); if(matEl) m.matiere = matEl.value;
+    const colEl = document.getElementById('f_couleur'); if(colEl) m.couleur = resolveColorId(colEl.value);
+    const stEl = document.getElementById('f_statut'); if(stEl) m.statut = stEl.value;
+    const obsEl = document.getElementById('obs_'+id); if(obsEl) m.observation = obsEl.value;
+    const realFoot=document.getElementById('f_moule_reel');
+    if(foundMoule && realFoot) foundMoule.piecesReelles=parseInt(realFoot.value)||0;
+    if(realFoot) m.piecesReelles = realFoot.value;
+    config[id].mouleId = m.mouleId; config[id].operateur = m.operateur; config[id].cycle = m.cycle; config[id].matiere = m.matiere; config[id].couleur = m.couleur;
+    saveConfig();
+  } else {
+    const p = document.getElementById('f_production'); if(p) m.production = p.value;
+    const s = document.getElementById('f_sacs'); if(s) m.sacs = s.value;
+    const b = document.getElementById('f_broye'); if(b) m.broye = b.value;
+    const r = document.getElementById('f_rebuts'); if(r) m.rebuts = r.value;
+    const st = document.getElementById('f_statut_t2'); if(st) m.statut = st.value;
+    const op = document.getElementById('f_operateur_t2'); if(op) m.operateur = op.value;
+    const mat = document.getElementById('f_matiere_t2'); if(mat) m.matiere = mat.value;
+    const col = document.getElementById('f_couleur_t2'); if(col) m.couleur = resolveColorId(col.value);
+    const obs = document.getElementById('obs_'+id); if(obs) m.observation = obs.value;
+    const me = document.getElementById('f_moule_t2');
+    if(me){ const t = String(me.value||'').trim().toLowerCase(); const f = refs.moules.find(x=>String(x.numero).toLowerCase()===t); if(f){ m.mouleId = f.id; config[id].mouleId = f.id; } }
+    m.arrets = tempArrets.filter(a => (a.cause && a.cause.trim()) || (a.duree && parseFloat(a.duree)>0));
+  }
+  syncAdvancedMoulesFromInputs(id);
+  saveDays();
+}
+function quitTournee(){ try{ saveCurrentStep(); }catch(e){} showScreen('home'); }
+
+function populateTourneeJump(){
+  const selA = document.getElementById('tourneeJumpAtelier'); if(!selA) return;
+  const ateliers = [];
+  machineIds.forEach(id=>{ const at = config[id].atelier; if(!ateliers.includes(at)) ateliers.push(at); });
+  ateliers.sort((a,b)=>Number(a)-Number(b));
+  selA.innerHTML = ateliers.map(at=>`<option value="${esc(String(at))}">Atelier ${esc(String(at))}</option>`).join('');
+  selA.value = config[machineIds[currentIndex]].atelier;
+}
+function onJumpAtelierChange(){
+  const atelier = document.getElementById('tourneeJumpAtelier').value;
+  const idx = machineIds.findIndex(id => String(config[id].atelier) === String(atelier));
+  if(idx >= 0) jumpTournee(idx);
+}
+function jumpTournee(idx){
+  try{ saveCurrentStep(); currentIndex = parseInt(idx, 10) || 0; renderTourneeStep(); }
+  catch(e){ alert('Erreur navigation : ' + (e && e.message ? e.message : e)); }
+}
+function stepTournee(dir){
+  try{
+    saveCurrentStep();
+    currentIndex += dir;
+    if(currentIndex < 0) currentIndex = 0;
+    if(currentIndex >= machineIds.length){
+      if(currentTournee === 1) showScreen('effectif');
+      else showScreen('home');
+      return;
+    }
+    renderTourneeStep();
+  }catch(e){ alert('Erreur navigation : ' + (e && e.message ? e.message : e)); }
+}
+
+/* ============================================================
+   RÉSUMÉ
+   ============================================================ */
+function renderResumeScreen(){
+  const sel = document.getElementById('resumeDateSelect'), keys = Object.keys(days).sort().reverse();
+  sel.innerHTML = keys.map(k=>`<option value="${k}">${formatDateShort(k)}</option>`).join('');
+  if(keys.length) sel.value = keys.includes(todayStr()) ? todayStr() : keys[0];
+  renderResume();
+}
+function renderResume(){
+  const dateKey = document.getElementById('resumeDateSelect').value, day = days[dateKey], content = document.getElementById('resumeContent');
+  if(!day){ content.innerHTML = '<p>Aucune donnée.</p>'; return; }
+  const parAtelier = {}, ouvriersJour = new Set();
+  let totalMachinesActives = 0;
+  const ordered = [...machineIds].sort((a,b)=>{ const ca=config[a]||{}, cb=config[b]||{}; return Number(ca.atelier||0)-Number(cb.atelier||0); });
+  function getRows(m){
+    const rows=[];
+    const main=refs.moules.find(x=>x.id===m.mouleId);
+    if(main) rows.push({moule:main, cycle:String(m.cycle||'').trim(), couleurId:m.couleur});
+    (m.moulesAvances||[]).forEach(ma=>{ const mo=refs.moules.find(x=>x.id===ma.mouleId); if(mo) rows.push({moule:mo, cycle:String(ma.cycle||'').trim(), couleurId:ma.couleur}); });
+    return rows;
+  }
+  ordered.forEach(id=>{
+    const c=config[id]||{}, m=day.machines[id]||{}, atelier=c.atelier;
+    if(!parAtelier[atelier]) parAtelier[atelier]={machines:0,ouvriers:new Set(),rows:[]};
+    const a=parAtelier[atelier];
+    const op=String(m.operateur||'').trim();
+    const mouldRows=getRows(m);
+    if(m.statut !== 'arret_total'){ a.machines+=1; totalMachinesActives+=1; }
+    if(op){ a.ouvriers.add(op); ouvriersJour.add(op); }
+    a.rows.push({id,c,m,mouldRows});
+  });
+  let html = `<div class="resume-buttons">
+    <button type="button" class="btn-primary" onclick="showResumePart('resumeMoules')">📋 Moules + couleurs</button>
+    <button type="button" class="btn-secondary" onclick="showResumePart('resumeAteliers')">🏭 Ateliers</button>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px 14px;font-size:11px;color:#666;margin:4px 0 10px;">
+    <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#dc2626;margin-right:4px;"></i>Arrêt total</span>
+    <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f59e0b;margin-right:4px;"></i>Moule + cycle manquants</span>
+    <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#eab308;margin-right:4px;"></i>Cycle manquant</span>
+    <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2563eb;margin-right:4px;"></i>Opérateur manquant</span>
+    <span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#16a34a;margin-right:4px;"></i>Tout est renseigné</span>
+    <span style="color:var(--red);">📝 Observation</span>
+  </div>
+  <div id="resumeMoules" class="resume-part"><div class="card"><h2>Tournée 1 — Moules par machine</h2>`;
+  Object.keys(parAtelier).sort((a,b)=>Number(a)-Number(b)).forEach(at=>{
+    html += `<h3 style="margin:16px 0 6px">Atelier ${esc(at)}</h3>`;
+    parAtelier[at].rows.forEach(r=>{
+      const noMoule = r.mouldRows.length === 0;
+      const cyMiss = noMoule ? true : r.mouldRows.some(x => !String(x.cycle || '').trim());
+      const opMiss = !String(r.m.operateur || '').trim();
+      const hasObs = String(r.m.observation || '').trim();
+      let dot = '';
+      if(r.m.statut === 'arret_total') dot = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dc2626;margin-right:5px;vertical-align:middle"></span>';
+      else if(noMoule && cyMiss) dot = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f59e0b;margin-right:5px;vertical-align:middle"></span>';
+      else if(!noMoule && cyMiss) dot = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#eab308;margin-right:5px;vertical-align:middle"></span>';
+      else if(!noMoule && !cyMiss && opMiss) dot = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2563eb;margin-right:5px;vertical-align:middle"></span>';
+      else if(!noMoule && !cyMiss && !opMiss) dot = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#16a34a;margin-right:5px;vertical-align:middle"></span>';
+      const moulds = noMoule ? '<span style="color:#777">Aucun moule</span>' : r.mouldRows.map(x=>{
+        const col = refs.couleurs.find(c=>c.id===(x.couleurId||r.m.couleur));
+        return `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:10px;padding:3px 8px;border:1px solid #ddd;border-radius:8px"><b>${esc(x.moule.numero)}</b><span>${esc(col?col.nom:'—')}</span></span>`;
+      }).join('');
+      const obsIcon = hasObs ? `<span title="${esc(hasObs)}" style="color:var(--red);margin-left:6px;font-size:12px;">📝</span>` : '';
+      html += `<div style="display:flex;align-items:center;gap:6px;padding:8px 4px;border-bottom:1px solid #eee;flex-wrap:wrap">
+        <span style="min-width:88px;font-weight:700;white-space:nowrap">${dot}${esc(String(r.c.num||r.id))}${obsIcon}</span>
+        <span style="display:flex;align-items:center;flex-wrap:wrap">${moulds}</span>
+      </div>`;
+      if(hasObs) html += `<div style="padding:0 4px 8px 100px;font-size:11px;color:var(--grey);font-style:italic;white-space:pre-wrap;border-bottom:1px solid #f5f5f5;">${esc(hasObs)}</div>`;
+    });
+  });
+  html += `</div></div><div id="resumeAteliers" class="resume-part" style="display:none;"><div class="card"><h2>Tournée 1 — Ateliers</h2>`;
+  Object.keys(parAtelier).sort((a,b)=>Number(a)-Number(b)).forEach(at=>{ const a=parAtelier[at]; html += `<div class="atelier-summary"><h3>Atelier ${esc(at)}</h3><div>Machines en fonctionnement : <b>${a.machines}</b></div><div>Ouvriers : <b>${a.ouvriers.size}</b></div></div>`; });
+  html += `<div class="atelier-summary total"><h3>Total</h3><div>Machines en fonctionnement : <b>${totalMachinesActives}</b></div><div>Ouvriers uniques : <b>${ouvriersJour.size}</b></div></div>`;
+  if(day.effectif && (day.effectif.total || day.effectif.presents)){
+    html += `<div class="atelier-summary"><h3>Effectif du poste</h3><div>Total ouvriers : <b>${esc(String(day.effectif.total||0))}</b></div><div>Présents : <b>${esc(String(day.effectif.presents||0))}</b></div><div>Absents : <b>${esc(String(day.effectif.absents||0))}</b></div></div>`;
+  }
+  html += `</div></div>`;
+  content.innerHTML = html;
+}
+function showResumePart(id){
+  ['resumeMoules','resumeAteliers'].forEach(x=>{ const el = document.getElementById(x); if(el) el.style.display = (x===id?'block':'none'); });
+}
+
+async function exportRapportPDF(){
+  const source = document.querySelector('#rapportProdContent .rapport-doc');
+  if(!source){ alert('Aucun rapport à exporter.'); return; }
+  if(!window.html2canvas || !(window.jspdf && window.jspdf.jsPDF)){
+    alert('Les librairies PDF sont en cours de chargement (connexion internet requise la première fois). Réessayez dans quelques secondes.');
+    return;
+  }
+
+  let holder = null;
+  try{
+    /*
+      PDF PORTRAIT — rendu fidèle à l'aperçu du rapport.
+      On ne réduit PAS le rapport pour le faire tenir artificiellement sur une
+      seule page. La largeur reste proche de celle de l'aperçu et les pages
+      supplémentaires sont créées si nécessaire.
+    */
+    const clone = source.cloneNode(true);
+
+    const EXPORT_W = 640;
+    clone.style.width = EXPORT_W + 'px';
+    clone.style.maxWidth = EXPORT_W + 'px';
+    clone.style.minWidth = EXPORT_W + 'px';
+    clone.style.boxSizing = 'border-box';
+    clone.style.padding = '16px';
+    clone.style.margin = '0';
+    clone.style.overflow = 'visible';
+    clone.style.background = '#fff';
+
+    // Même proportions visuelles que l'aperçu à l'écran.
+    clone.querySelectorAll('.rp-head').forEach(el=>{
+      el.style.gap = '6px';
+    });
+    clone.querySelectorAll('.rp-title').forEach(el=>{
+      el.style.fontSize = '18px';
+      el.style.lineHeight = '1.25';
+    });
+    clone.querySelectorAll('.rp-ref').forEach(el=>el.style.fontSize='12px');
+    clone.querySelectorAll('.rp-sub').forEach(el=>{
+      el.style.fontSize='13px';
+      el.style.lineHeight='1.3';
+      el.style.marginTop='12px';
+    });
+    clone.querySelectorAll('.rp-date').forEach(el=>{
+      el.style.fontSize='12px';
+      el.style.marginTop='10px';
+    });
+
+    clone.querySelectorAll('.rp-table-wrap').forEach(w=>{
+      w.style.width='100%';
+      w.style.overflow='visible';
+      w.style.marginTop='18px';
+    });
+
+    clone.querySelectorAll('.rp-table').forEach(t=>{
+      t.style.width='100%';
+      t.style.minWidth='0';
+      t.style.tableLayout='fixed';
+      t.style.fontSize='12px';
+      t.style.borderCollapse='collapse';
+    });
+
+    clone.querySelectorAll('.rp-table th,.rp-table td').forEach(cell=>{
+      cell.style.padding='11px 5px';
+      cell.style.height='64px';
+      cell.style.minHeight='64px';
+      cell.style.whiteSpace='normal';
+      cell.style.wordBreak='break-word';
+      cell.style.overflowWrap='anywhere';
+      cell.style.lineHeight='1.28';
+      cell.style.verticalAlign='middle';
+    });
+    clone.querySelectorAll('.rp-table th').forEach(cell=>{
+      cell.style.height='82px';
+      cell.style.minHeight='82px';
+      cell.style.fontSize='10px';
+      cell.style.lineHeight='1.2';
+    });
+
+    clone.querySelectorAll('.rp-sign').forEach(el=>{
+      el.style.marginTop='28px';
+      el.style.gap='18px 10px';
+    });
+    clone.querySelectorAll('.rp-sign > div').forEach(el=>{
+      el.style.minHeight='62px';
+    });
+    clone.querySelectorAll('.rp-sign span').forEach(el=>{
+      el.style.fontSize='11px';
+      el.style.marginBottom='10px';
+    });
+    clone.querySelectorAll('.rp-sign input').forEach(inp=>{
+      inp.style.fontSize='13px';
+      inp.style.padding='7px 2px';
+    });
+
+    // Convert inputs to text while preserving their appearance.
+    clone.querySelectorAll('input').forEach(inp=>{
+      const span=document.createElement('div');
+      span.textContent=inp.value || '';
+      span.style.cssText='border-bottom:1px solid #111;font-weight:600;font-size:13px;padding:7px 2px;text-align:center;min-height:1.3em;';
+      inp.replaceWith(span);
+    });
+
+    holder=document.createElement('div');
+    holder.style.cssText='position:fixed;left:-12000px;top:0;width:'+EXPORT_W+'px;background:#fff;overflow:visible;';
+    holder.appendChild(clone);
+    document.body.appendChild(holder);
+
+    // Force browser layout before capture.
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+
+    const canvas=await html2canvas(clone,{
+      scale:2.5,
+      backgroundColor:'#ffffff',
+      width:EXPORT_W,
+      windowWidth:EXPORT_W,
+      scrollX:0,
+      scrollY:0,
+      useCORS:true,
+      logging:false
+    });
+
+    document.body.removeChild(holder);
+    holder=null;
+
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+    const pageW=210, pageH=297, margin=7;
+    const usableW=pageW-margin*2, usableH=pageH-margin*2;
+
+    // Width is fitted to A4. Height is allowed to continue onto extra pages.
+    const pxToMm=usableW/canvas.width;
+    const pageSlicePx=Math.floor(usableH/pxToMm);
+    let y=0, page=0;
+
+    while(y<canvas.height){
+      if(page>0) pdf.addPage();
+      const sliceH=Math.min(pageSlicePx,canvas.height-y);
+      const pc=document.createElement('canvas');
+      pc.width=canvas.width; pc.height=sliceH;
+      const ctx=pc.getContext('2d');
+      ctx.fillStyle='#fff'; ctx.fillRect(0,0,pc.width,pc.height);
+      ctx.drawImage(canvas,0,y,canvas.width,sliceH,0,0,canvas.width,sliceH);
+      pdf.addImage(pc.toDataURL('image/jpeg',0.95),'JPEG',margin,margin,usableW,sliceH*pxToMm,undefined,'FAST');
+      y+=sliceH; page++;
+    }
+
+    const blob=pdf.output('blob');
+    const groupe=getCurrentGroupe();
+    const dateKey=(document.getElementById('rapportDateSelect')||{}).value || todayStr();
+    const dateFmt=formatDateShort(dateKey).replace(/\./g,'-');
+    await saveOrShareBlob(blob,`${groupe} ${dateFmt} Rapport de production.pdf`,'application/pdf');
+  }catch(err){
+    console.error(err);
+    if(holder && holder.parentNode) holder.parentNode.removeChild(holder);
+    alert('Erreur lors de la génération du PDF : ' + (err.message || err));
+  }
+}
+
+/* ============================================================
+   RAPPORT DE PRODUCTION
+   ============================================================ */
+function renderRapportProdScreen(){
+  const sel = document.getElementById('rapportDateSelect'), keys = Object.keys(days).sort().reverse();
+  sel.innerHTML = keys.map(k=>`<option value="${k}">${formatDateShort(k)}</option>`).join('');
+  if(keys.length) sel.value = keys.includes(todayStr()) ? todayStr() : keys[0];
+  renderRapportProd();
+}
+function rpFmtPct(x){ return Number.isFinite(x) ? (x*100).toFixed(1)+'%' : '0.0%'; }
+function rpFmtNum(x){ return Number.isFinite(x) ? (Math.round(x*100)/100) : 0; }
+function rpObs(ok){ return ok ? 'Bien 😊' : 'Pas Bien 😠'; }
+function rpSaveSignataire(field, value){ refs.rapportSignataires[field] = value; saveRefs(); }
+
+function renderRapportProd(){
+  const dateKey = document.getElementById('rapportDateSelect').value, day = days[dateKey], content = document.getElementById('rapportProdContent');
+  if(!day){ content.innerHTML = '<p>Aucune donnée.</p>'; return; }
+
+  const rows = buildTourneeRows(day);
+  const num = v => parseFloat(v) || 0;
+
+  /* Tableau 1 : quantités */
+  const totalTheorique = rows.reduce((s,r)=>s+num(r['Quantité théorique']), 0);
+  const totalReelle    = rows.reduce((s,r)=>s+num(r['Quantité réelle']), 0);
+  const nbMachinesActives = new Set(rows.filter(r=>num(r['Cycle'])>0 && num(r['Quantité réelle'])>0).map(r=>r['Machine'])).size;
+  const taux1 = totalTheorique>0 ? totalReelle/totalTheorique : 0;
+
+  /* Tableau 2 : qualité (pas de colonne "NC à traiter" dans nos données -> on utilise le déchet) */
+  const totalDechet = rows.reduce((s,r)=>s+num(r['déchet']), 0);
+  const tauxNC = (totalReelle+totalDechet)>0 ? totalDechet/(totalReelle+totalDechet) : 0;
+
+  /* Tableau 3 : performance */
+  const totalEmprTheo = rows.reduce((s,r)=>s+num(r['Total Empr Théo']), 0);
+  const totalEmprReel = rows.reduce((s,r)=>s+num(r['Empr. Réelle']), 0);
+  const eff = day.effectif || {};
+  const presents = parseInt(eff.presents) || 0;
+  const tpm = taux1;
+  const teo = totalEmprTheo>0 ? totalEmprReel/totalEmprTheo : 0;
+  const tph = presents>0 ? totalReelle/(presents*10000) : 0;
+  const tpe = totalEmprReel>0 ? totalReelle/totalEmprReel : 0;
+
+  /* Tableau 4 : effectif */
+  const totalOuvriers = parseInt(eff.total) || 0;
+  const absents = (eff.absents!==undefined && eff.absents!==null && eff.absents!=='') ? (parseInt(eff.absents)||0) : Math.max(totalOuvriers-presents, 0);
+  const tauxAbs = totalOuvriers>0 ? absents/totalOuvriers : 0;
+
+  const groupe = 'Gr-'+getCurrentGroupe();
+  const sig = refs.rapportSignataires || {};
+  const now = new Date();
+
+  content.innerHTML = `
+  <div class="rapport-doc">
+    <div class="rp-head">
+      <div></div>
+      <div class="rp-title">RAPPORT JOURNALIER DE PRODUCTION</div>
+      <div class="rp-ref">REF :<br>PAGE : 1/1</div>
+    </div>
+    <div class="rp-sub">DIRECTION USINE BABA HASSEN<br>ATELIER INJECTION</div>
+    <div class="rp-date">DATE : <b>${esc(formatDateShort(day.date))}</b></div>
+
+    <div class="rp-table-wrap"><table class="rp-table">
+      <thead><tr><th>Machine</th><th>QTE THEORIQUE</th><th>QTE PRODUITE</th><th>TAUX (%)</th><th>TAUX NORMATIF</th><th>OBSERVATION</th></tr></thead>
+      <tbody><tr><td>${nbMachinesActives}</td><td>${rpFmtNum(totalTheorique)}</td><td>${rpFmtNum(totalReelle)}</td><td>${rpFmtPct(taux1)}</td><td>${rpFmtPct(0.9)}</td><td>${rpObs(taux1>=0.9)}</td></tr></tbody>
+    </table></div>
+
+    <div class="rp-table-wrap"><table class="rp-table">
+      <thead><tr><th>GROUPE</th><th>QTE CONFORME</th><th>QTE NC</th><th>TAUX NC (%)</th><th>TAUX NORMATIF</th><th>OBSERVATION</th></tr></thead>
+      <tbody><tr><td>${esc(groupe)}</td><td>${rpFmtNum(totalReelle)}</td><td>${rpFmtNum(totalDechet)}</td><td>${rpFmtPct(tauxNC)}</td><td>${rpFmtPct(0.005)}</td><td>${rpObs(tauxNC<=0.005)}</td></tr></tbody>
+    </table></div>
+
+    <div class="rp-table-wrap"><table class="rp-table">
+      <thead><tr><th>GROUPE</th><th>Nbr d'opérateur Présent</th><th>TPM</th><th>TEO</th><th>TPH</th><th>TPE</th></tr></thead>
+      <tbody><tr><td>${esc(groupe)}</td><td>${presents}</td><td>${rpFmtPct(tpm)}</td><td>${rpFmtPct(teo)}</td><td>${rpFmtPct(tph)}</td><td>${rpFmtNum(tpe)}</td></tr></tbody>
+    </table></div>
+
+    <div class="rp-table-wrap"><table class="rp-table">
+      <thead><tr><th>GROUPE</th><th>Nbr éffectif théorique</th><th>Nbr d'opérateur Absent</th><th>Taux d'absentéisme</th><th>Taux normatif</th><th>Observation</th></tr></thead>
+      <tbody><tr><td>${esc(groupe)}</td><td>${totalOuvriers}</td><td>${absents}</td><td>${rpFmtPct(tauxAbs)}</td><td>${rpFmtPct(0.03)}</td><td>${rpObs(tauxAbs<=0.03)}</td></tr></tbody>
+    </table></div>
+
+    <div class="rp-sign">
+      <div><span>Établie par</span><input value="${esc(sig.etabli||'')}" onchange="rpSaveSignataire('etabli', this.value)"></div>
+      <div><span>Vérifié par</span><input value="${esc(sig.verifie||'')}" onchange="rpSaveSignataire('verifie', this.value)"></div>
+      <div><span>Approuvé par</span><input value="${esc(sig.approuve||'')}" onchange="rpSaveSignataire('approuve', this.value)"></div>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   EXPORT EXCEL
+   ============================================================ */
+function buildTourneeRows(day){
+  const rows = [];
+
+  machineIds.forEach(id => {
+    const c = config[id] || {};
+    const m = day.machines[id] || {};
+
+    /* === LIGNE 1 : MOULE PRINCIPAL === */
+    const moule = refs.moules.find(x => x.id === m.mouleId);
+    const couleur = refs.couleurs.find(x => x.id === m.couleur);
+    const arrets = m.arrets || [];
+    const totalArret = arrets.reduce((s,a) => s + (parseFloat(a.duree) || 0), 0);
+    const arr1 = arrets[0] || {cause:'', duree:''};
+    const arr2 = arrets[1] || {cause:'', duree:''};
+    const arr3 = arrets[2] || {cause:'', duree:''};
+
+    const cycleRef = parseFloat(moule?.cycleReference) || 0;
+    const cycleActuel = parseFloat(m.cycle) || 0;
+    const piecesParMoule = parseFloat(moule?.piecesParMoule) || 0;
+    const production = parseFloat(m.production) || 0;
+    const cyclePourTheo = cycleRef > 0 ? cycleRef : cycleActuel;
+
+    let totalEmprTh = '';
+    if(cyclePourTheo > 0){
+      const dispoSecondes = Math.max(0, 7.5*3600 - totalArret*3600);
+      totalEmprTh = Math.floor(dispoSecondes / cyclePourTheo);
+    }
+    let emprReel = '';
+    if(piecesParMoule > 0 && production > 0){
+      emprReel = Math.round(production / piecesParMoule);
+    }
+    let qteTheo = '';
+    if(totalEmprTh !== '' && piecesParMoule > 0){
+      qteTheo = totalEmprTh * piecesParMoule;
+    }
+
+    rows.push({
+      'Date':               formatDateShort(day.date),
+      'Shift':              day.shift || '',
+      'Atelier':            c.atelier || '',
+      'Machine':            c.num || '',
+      'Opérateur':          m.operateur || '',
+      'N° Moule':           moule ? moule.numero : '',
+      'Désignation':        moule ? moule.nom : '',
+      'Total Empr Théo':    totalEmprTh,
+      'Empr. Réelle':       emprReel,
+      'Cycle référence':    moule ? (moule.cycleReference || '') : '',
+      'Cycle':              m.cycle || '',
+      'Quantité théorique': qteTheo,
+      'Quantité réelle':    production || '',
+      'déchet':             m.rebuts || '',
+      'Matière':            m.matiere || '',
+      'Couleur':            couleur ? couleur.nom : '',
+      'Vierge (en sac)':    m.sacs || '',
+      'Broyé (en sac)':     m.broye || '',
+      "Temps d'arrêt":      arr1.duree || '',
+      "Cause de l'arrêt":   arr1.cause || '',
+      "Temps d'arrêt2":     arr2.duree || '',
+      "Cause de l'arrêt2":  arr2.cause || '',
+      "Temps d'arrêt3":     arr3.duree || '',
+      "Cause de l'arrêt3":  arr3.cause || '',
+      'Observation(s)':     m.observation || ''
+    });
+
+    /* === LIGNE 2+ : 2ÈME MOULE === */
+    (m.moulesAvances || []).forEach(ma => {
+      if(!ma.mouleId) return;
+      const moule2 = refs.moules.find(x => x.id === ma.mouleId);
+      const couleur2 = refs.couleurs.find(x => x.id === ma.couleur);
+
+      const cycleRef2 = parseFloat(moule2?.cycleReference) || 0;
+      const cycleActuel2 = parseFloat(ma.cycle) || 0;
+      const piecesParMoule2 = parseFloat(moule2?.piecesParMoule) || 0;
+      const production2 = parseFloat(ma.production) || 0;
+      const arret2 = parseFloat(ma.arret) || 0;
+      const cyclePourTheo2 = cycleRef2 > 0 ? cycleRef2 : cycleActuel2;
+
+      let totalEmprTh2 = '';
+      if(cyclePourTheo2 > 0){
+        const dispoSecondes2 = Math.max(0, 7.5*3600 - arret2*3600);
+        totalEmprTh2 = Math.floor(dispoSecondes2 / cyclePourTheo2);
+      }
+      let emprReel2 = '';
+      if(piecesParMoule2 > 0 && production2 > 0){
+        emprReel2 = Math.round(production2 / piecesParMoule2);
+      }
+      let qteTheo2 = '';
+      if(totalEmprTh2 !== '' && piecesParMoule2 > 0){
+        qteTheo2 = totalEmprTh2 * piecesParMoule2;
+      }
+
+      rows.push({
+        'Date':               formatDateShort(day.date),
+        'Shift':              day.shift || '',
+        'Atelier':            c.atelier || '',
+        'Machine':            c.num || '',
+        'Opérateur':          m.operateur || '',
+        'N° Moule':           moule2 ? moule2.numero : '',
+        'Désignation':        moule2 ? moule2.nom : '',
+        'Total Empr Théo':    totalEmprTh2,
+        'Empr. Réelle':       emprReel2,
+        'Cycle référence':    moule2 ? (moule2.cycleReference || '') : '',
+        'Cycle':              ma.cycle || '',
+        'Quantité théorique': qteTheo2,
+        'Quantité réelle':    production2 || '',
+        'déchet':             ma.rebuts || '',
+        'Matière':            ma.matiere || '',
+        'Couleur':            couleur2 ? couleur2.nom : '',
+        'Vierge (en sac)':    ma.sacs || '',
+        'Broyé (en sac)':     ma.broye || '',
+        "Temps d'arrêt":      ma.arret || '',
+        "Cause de l'arrêt":   ma.cause || '',
+        "Temps d'arrêt2":     '',
+        "Cause de l'arrêt2":  '',
+        "Temps d'arrêt3":     '',
+        "Cause de l'arrêt3":  '',
+        'Observation(s)':     ma.observation || ''
+      });
+    });
+  });
+
+  return rows;
+}
+
+function exportExcel(){
+  const dateKey = document.getElementById('resumeDateSelect') && document.getElementById('resumeDateSelect').value
+                  ? document.getElementById('resumeDateSelect').value
+                  : todayStr();
+  const day = days[dateKey] || ensureToday();
+  if(!day){ alert('Aucune donnée.'); return; }
+
+  const rows = buildTourneeRows(day);
+
+  if(!window.XLSX){ alert('SheetJS indisponible. Vérifiez la connexion Internet.'); return; }
+
+  const headers = [
+    'Date','Shift','Atelier','Machine','Opérateur','N° Moule','Désignation',
+    'Total Empr Théo','Empr. Réelle','Cycle référence','Cycle',
+    'Quantité théorique','Quantité réelle','déchet','Matière','Couleur',
+    'Vierge (en sac)','Broyé (en sac)',
+    "Temps d'arrêt","Cause de l'arrêt",
+    "Temps d'arrêt2","Cause de l'arrêt2",
+    "Temps d'arrêt3","Cause de l'arrêt3",
+    'Observation(s)'
+  ];
+
+  /* Feuille 1 : Tournée */
+  const ws = XLSX.utils.json_to_sheet(rows, {header: headers});
+
+  /* Feuille 2 : Suivi Prèsence */
+  const eff = day.effectif || {};
+  const totalOuvriers = parseInt(eff.total) || 0;
+  const presents = parseInt(eff.presents) || 0;
+  const absents = (eff.absents !== undefined && eff.absents !== null && eff.absents !== '')
+                  ? (parseInt(eff.absents) || 0)
+                  : Math.max(totalOuvriers - presents, 0);
+
+  /* Feuille 2 : Suivi Présence — toutes les informations du jour sur UNE SEULE LIGNE */
+  const effectifRows = [
+    {
+      'Date':           formatDateShort(day.date),
+      'Shift':          day.shift || '',
+      'Total ouvriers': totalOuvriers,
+      'Présents':       presents,
+      'Absents':        absents
+    }
+  ];
+
+  const wsEff = XLSX.utils.json_to_sheet(effectifRows, {
+    header: ['Date','Shift','Total ouvriers','Présents','Absents']
+  });
+  wsEff['!cols'] = [{wch:14},{wch:12},{wch:16},{wch:12},{wch:12}];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Tournée');
+  XLSX.utils.book_append_sheet(wb, wsEff, 'Suivi Prèsence');
+
+  const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+  const blob = new Blob([wbout], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+
+  /* Nom du fichier : [GROUPE] [DATE] Fiche de production injection.xlsx */
+  const dateFmt = formatDateShort(day.date).replace(/\./g, '-');
+  const groupe = getCurrentGroupe();
+  const filename = `${groupe} ${dateFmt} Fiche de production injection.xlsx`;
+
+  saveOrShareBlob(blob, filename, blob.type);
+}
+
+renderHome();
+</script>
+</body>
+</html>
