@@ -834,12 +834,11 @@ document.addEventListener('touchstart', function(e){
   if(!e.target.closest('.ac-list') && !e.target.closest('input[data-ac]')) acHideAll();
 }, {passive:true});
 
-/* Android/Capacitor touch fallback — safe tap handling
-   Do not treat a finger movement/scroll as a click, and suppress the
-   delayed native click when the fallback had to execute the action. */
+/* Android touch handling: a tap is valid only when the finger did not move.
+   Execute it once on touchend and suppress the following synthetic click. */
 (function installAndroidTapFallback(){
-  let touchStartX=0, touchStartY=0, moved=false, fallbackHandledBtn=null;
-  const MOVE_TOLERANCE=12;
+  let touchStartX=0, touchStartY=0, moved=false, suppressClickUntil=0;
+  const MOVE_TOLERANCE=14;
   document.addEventListener('touchstart', function(e){
     const t=e.touches && e.touches[0];
     if(!t) return;
@@ -850,26 +849,26 @@ document.addEventListener('touchstart', function(e){
     if(!t) return;
     if(Math.abs(t.clientX-touchStartX)>MOVE_TOLERANCE || Math.abs(t.clientY-touchStartY)>MOVE_TOLERANCE) moved=true;
   }, {passive:true, capture:true});
-  document.addEventListener('click', function(e){
-    const btn=e.target && e.target.closest ? e.target.closest('button') : null;
-    if(btn && btn===fallbackHandledBtn){
-      e.preventDefault(); e.stopImmediatePropagation(); fallbackHandledBtn=null;
-    }
-  }, true);
   document.addEventListener('touchend', function(e){
     const btn=e.target && e.target.closest ? e.target.closest('button') : null;
     if(!btn || btn.disabled || moved) return;
+    /* Custom popups/status controls have their own touch handlers. */
+    if(e.target.closest && (e.target.closest('.ref-select-wrap') || e.target.closest('select.status-popup-select') || e.target.closest('#refPopupList') || e.target.closest('#statusPopupOverlay'))) return;
     const code=btn.getAttribute('onclick');
     if(!code) return;
-    setTimeout(function(){
-      if(moved) return;
-      try {
-        fallbackHandledBtn=btn;
-        Function(code).call(btn);
-        setTimeout(function(){ if(fallbackHandledBtn===btn) fallbackHandledBtn=null; }, 700);
-      } catch(err) { console.error('Android tap fallback:', err); fallbackHandledBtn=null; }
-    }, 280);
-  }, {passive:true, capture:true});
+    e.preventDefault();
+    e.stopPropagation();
+    suppressClickUntil=Date.now()+900;
+    try { Function(code).call(btn); }
+    catch(err) { console.error('Android tap fallback:', err); }
+  }, {passive:false, capture:true});
+  document.addEventListener('click', function(e){
+    if(Date.now() < suppressClickUntil){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      suppressClickUntil=0;
+    }
+  }, true);
 })();
 
 /* ============================================================
@@ -1681,8 +1680,11 @@ function removeAdvancedMoule(id, index){
 function renderArretsList(){
   const el = document.getElementById('arretsList'); if(!el) return;
   el.innerHTML = tempArrets.map((a,i)=>{
-    const missingCause = (parseFloat(a.duree)>0 && !a.cause);
-    const rowStyle = missingCause ? 'margin-top:8px;background:#fee2e2;border:1px solid #dc2626;border-radius:6px;padding:6px;' : 'margin-top:8px;';
+    const hasCause = !!String(a.cause || '').trim();
+    const hasDuree = parseFloat(a.duree) > 0;
+    const missingCause = hasDuree && !hasCause;
+    const missingDuree = hasCause && !hasDuree;
+    const rowStyle = (missingCause || missingDuree) ? 'margin-top:8px;background:#fee2e2;border:1px solid #dc2626;border-radius:6px;padding:6px;' : 'margin-top:8px;';
     return `<div class="row" style="${rowStyle}">
       <select style="flex:0 0 78px;font-family:monospace;" onchange="tempArrets[${i}].cause=this.value; renderArretsList(); updateT2RateFromContext();"><option value="">—</option>${refs.causes.map(c => `<option value="${c}" ${a.cause===c?'selected':''}>${c}</option>`).join('')}</select>
       <input type="number" step="0.1" min="0" placeholder="Heures" value="${a.duree||''}" style="flex:1;" oninput="tempArrets[${i}].duree=this.value; updateT2RateFromContext();">
@@ -2366,11 +2368,19 @@ document.addEventListener('input', function(e){
     if(wrap){ e.preventDefault(); e.stopPropagation(); if(owner===wrap && popup && popup.classList.contains('open')) closePopup(); else openPopup(wrap); return; }
     if(!e.target.closest || !e.target.closest('#refPopupList')) closePopup();
   },true);
+  let sx=0, sy=0, smoved=false;
+  document.addEventListener('touchstart',function(e){
+    const t=e.touches&&e.touches[0]; if(!t) return;
+    sx=t.clientX; sy=t.clientY; smoved=false;
+  },{passive:true,capture:true});
+  document.addEventListener('touchmove',function(e){
+    const t=e.touches&&e.touches[0]; if(!t) return;
+    if(Math.abs(t.clientX-sx)>14 || Math.abs(t.clientY-sy)>14) smoved=true;
+  },{passive:true,capture:true});
   document.addEventListener('touchend',function(e){
     const wrap=e.target.closest && e.target.closest('.ref-select-wrap');
-    if(!wrap) return;
-    e.preventDefault();
-    e.stopPropagation();
+    if(!wrap || smoved) return;
+    e.preventDefault(); e.stopPropagation();
     if(owner===wrap && popup && popup.classList.contains('open')) closePopup();
     else openPopup(wrap);
   },{passive:false,capture:true});
@@ -2413,15 +2423,31 @@ document.addEventListener('input', function(e){
     }).join('')+'</div>';
     box.classList.add('open');
   }
-  function handle(e){
+  let sx=0, sy=0, moved=false;
+  document.addEventListener('touchstart',function(e){
+    const t=e.touches&&e.touches[0]; if(!t) return;
+    sx=t.clientX; sy=t.clientY; moved=false;
+  },{passive:true,capture:true});
+  document.addEventListener('touchmove',function(e){
+    const t=e.touches&&e.touches[0]; if(!t) return;
+    if(Math.abs(t.clientX-sx)>14 || Math.abs(t.clientY-sy)>14) moved=true;
+  },{passive:true,capture:true});
+  function handleClick(e){
     const sel=e.target && e.target.closest ? e.target.closest('select.status-popup-select') : null;
     if(!sel) return;
     e.preventDefault(); e.stopPropagation();
     if(owner===sel && overlay && overlay.classList.contains('open')) closeStatusPopup();
     else openStatusPopup(sel);
   }
-  document.addEventListener('click',handle,true);
-  document.addEventListener('touchend',handle,{passive:false,capture:true});
+  function handleTouch(e){
+    const sel=e.target && e.target.closest ? e.target.closest('select.status-popup-select') : null;
+    if(!sel || moved) return;
+    e.preventDefault(); e.stopPropagation();
+    if(owner===sel && overlay && overlay.classList.contains('open')) closeStatusPopup();
+    else openStatusPopup(sel);
+  }
+  document.addEventListener('click',handleClick,true);
+  document.addEventListener('touchend',handleTouch,{passive:false,capture:true});
 })();
 </script>
 </body>
