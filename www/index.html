@@ -857,11 +857,48 @@ document.addEventListener('touchstart', function(e){
   if(!e.target.closest('.ac-list') && !e.target.closest('input[data-ac]')) acHideAll();
 }, {passive:true});
 
-/* Android tap fallback removed: it intercepted touchend and replayed
-   onclick handlers manually, which strips the "real click" user-gesture
-   status that browsers require for file pickers (input.click()) and the
-   share sheet (navigator.share()). Those APIs were being silently
-   blocked with no error. Native click events are used instead. */
+/* Android touch handling: a tap is valid only when the finger did not move.
+   Execute it once on touchend and suppress the following synthetic click.
+   EXCEPTION: buttons that open a file picker (import) or trigger a share
+   sheet / download (export) are left alone so the browser sees a real
+   'click' event — file pickers and navigator.share() require genuine
+   click-gesture activation and silently do nothing otherwise. */
+(function installAndroidTapFallback(){
+  let touchStartX=0, touchStartY=0, moved=false, suppressClickUntil=0;
+  const MOVE_TOLERANCE=14;
+  const NEEDS_REAL_CLICK=/^(import\w*Excel|exportExcel|exportRapportPDF|downloadReferenceTemplate)\s*\(/;
+  document.addEventListener('touchstart', function(e){
+    const t=e.touches && e.touches[0];
+    if(!t) return;
+    touchStartX=t.clientX; touchStartY=t.clientY; moved=false;
+  }, {passive:true, capture:true});
+  document.addEventListener('touchmove', function(e){
+    const t=e.touches && e.touches[0];
+    if(!t) return;
+    if(Math.abs(t.clientX-touchStartX)>MOVE_TOLERANCE || Math.abs(t.clientY-touchStartY)>MOVE_TOLERANCE) moved=true;
+  }, {passive:true, capture:true});
+  document.addEventListener('touchend', function(e){
+    const btn=e.target && e.target.closest ? e.target.closest('button') : null;
+    if(!btn || btn.disabled || moved) return;
+    /* Custom popups/status controls have their own touch handlers. */
+    if(e.target.closest && (e.target.closest('.ref-select-wrap') || e.target.closest('select.status-popup-select') || e.target.closest('#refPopupList') || e.target.closest('#statusPopupOverlay'))) return;
+    const code=btn.getAttribute('onclick');
+    if(!code) return;
+    if(NEEDS_REAL_CLICK.test(code.trim())) return; /* let the native click fire */
+    e.preventDefault();
+    e.stopPropagation();
+    suppressClickUntil=Date.now()+900;
+    try { Function(code).call(btn); }
+    catch(err) { console.error('Android tap fallback:', err); }
+  }, {passive:false, capture:true});
+  document.addEventListener('click', function(e){
+    if(Date.now() < suppressClickUntil){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      suppressClickUntil=0;
+    }
+  }, true);
+})();
 
 /* ============================================================
    OBSERVATION
@@ -1590,25 +1627,4 @@ function renderAdvancedT2(id){
       <div class="moule-lookup" style="grid-template-columns:1.6fr 1fr;">
         <div class="ac-wrap"><label style="font-size:10px;">N° 2ème moule</label>
           ${acInputHTML({id:'f_moule_s'+i, field:'moule', machineId:id, value: mo?mo.numero:'', placeholder:'Tapez 2 lettres/chiffres…', secondary:true, index:i, style:'font-size:16px;font-weight:800;'})}
-          <div class="moule-name-sub">${mo?esc(mo.nom):''}</div>
-        </div>
-        <div><label style="font-size:10px;">Pièces théoriques</label><input value="${mo?esc(mo.piecesParMoule):''}" readonly></div>
-      </div>
-      <div class="form-row">
-        <div style="flex:1" class="ac-wrap"><label style="font-size:10px;">Matière</label>
-          ${refSelectHTML({id:'f_matiere_s'+i, field:'matiere', machineId:id, value: ma.matiere||'', secondary:true, index:i})}
-        </div>
-        <div style="flex:1" class="ac-wrap"><label style="font-size:10px;">Couleur</label>
-          ${refSelectHTML({id:'f_couleur_s'+i, field:'couleur', machineId:id, value: colorName(ma.couleur), secondary:true, index:i})}
-        </div>
-      </div>
-      <div class="form-row">
-        <div style="flex:1"><label style="font-size:10px;">Cycle Théo</label><input type="text" id="f_cycle_theorique_s${i}" value="${mo && mo.cycleReference ? esc(mo.cycleReference) : ''}" readonly></div>
-        <div style="flex:1"><label style="font-size:10px;">Cycle (secondes)</label><input type="number" id="f_cycle_s${i}" class="cycle-real-field" min="0" step="0.1" value="${esc(ma.cycle||'')}" onchange="updateAdvancedMoule('${id}',${i},'cycle',this.value)" placeholder="Ex. 25"></div>
-      </div>
-      <div class="form-row">
-        <div style="flex:1"><label style="font-size:10px;">Quantité</label><input type="number" min="0" value="${esc(ma.production||'')}" onchange="updateAdvancedMoule('${id}',${i},'production',this.value)"></div>
-        <div style="flex:1"><label style="font-size:10px;">Sacs</label><input type="number" min="0" value="${esc(ma.sacs||'')}" onchange="updateAdvancedMoule('${id}',${i},'sacs',this.value)"></div>
-      </div>
-      <div class="form-row">
-        <div style="flex:1"><label style="font-size:10px;">Broyé</label><input type="number" min="0
+          <div class=
