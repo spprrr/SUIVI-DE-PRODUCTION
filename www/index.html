@@ -1234,26 +1234,103 @@ function removeCause(i){ if(!confirm('Supprimer cette cause ?')) return; refs.ca
    ============================================================ */
 function normalizeHeader(v){ return String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,''); }
 function firstField(row, names){ const keys=Object.keys(row||{}); const wanted=names.map(normalizeHeader); const key=keys.find(k=>wanted.includes(normalizeHeader(k))); return key===undefined ? '' : row[key]; }
-function ensureXLSX(){ if(typeof XLSX === 'undefined'){ alert('SheetJS indisponible.'); return false; } return true; }
+function ensureXLSX(){ return typeof XLSX !== 'undefined'; }
+
+/* Offline XLSX fallback for Android WebView: reads normal .xlsx files without an external library. */
+async function readNativeXLSX(file, preferredSheet){
+  const ab = await file.arrayBuffer();
+  const bytes = new Uint8Array(ab);
+  const dv = new DataView(ab);
+  const u16 = (o)=>dv.getUint16(o,true), u32=(o)=>dv.getUint32(o,true);
+  let eocd=-1;
+  for(let i=bytes.length-22;i>=Math.max(0,bytes.length-65558);i--){
+    if(u32(i)===0x06054b50){eocd=i;break;}
+  }
+  if(eocd<0) throw new Error('Fichier XLSX invalide.');
+  const cdSize=u32(eocd+12), cdOff=u32(eocd+16);
+  const entries={}; let pos=cdOff;
+  const td=new TextDecoder('utf-8');
+  while(pos<cdOff+cdSize){
+    if(u32(pos)!==0x02014b50) break;
+    const method=u16(pos+10), csize=u32(pos+20), usize=u32(pos+24), nlen=u16(pos+28), xlen=u16(pos+30), clen=u16(pos+32), off=u32(pos+42);
+    const name=td.decode(bytes.subarray(pos+46,pos+46+nlen));
+    entries[name]={method,csize,usize,off};
+    pos+=46+nlen+xlen+clen;
+  }
+  async function entry(name){
+    const e=entries[name]; if(!e) throw new Error('Fichier interne manquant: '+name);
+    const o=e.off; const nlen=u16(o+26), xlen=u16(o+28);
+    const raw=bytes.subarray(o+30+nlen+xlen,o+30+nlen+xlen+e.csize);
+    if(e.method===0) return raw;
+    if(e.method!==8) throw new Error('Compression XLSX non prise en charge.');
+    if(typeof DecompressionStream==='undefined') throw new Error('WebView trop ancien pour lire XLSX hors connexion.');
+    const ds=new DecompressionStream('deflate-raw');
+    const out=await new Response(new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer();
+    return new Uint8Array(out);
+  }
+  async function xml(name){return new TextDecoder('utf-8').decode(await entry(name));}
+  const parser=new DOMParser();
+  const text=(el)=>el?String(el.textContent||''):'';
+  const wb=parser.parseFromString(await xml('xl/workbook.xml'),'application/xml');
+  const rels=parser.parseFromString(await xml('xl/_rels/workbook.xml.rels'),'application/xml');
+  const relMap={}; Array.from(rels.getElementsByTagName('Relationship')).forEach(r=>relMap[r.getAttribute('Id')]=r.getAttribute('Target'));
+  const sheets=Array.from(wb.getElementsByTagName('sheet')).map(x=>({name:x.getAttribute('name')||'',rid:x.getAttribute('r:id')}));
+  const targetSheet=sheets.find(x=>x.name===preferredSheet)||sheets[0];
+  if(!targetSheet) throw new Error('Aucune feuille Excel.');
+  let target=relMap[targetSheet.rid]||'';
+  target=target.replace(/^\/+/, ''); if(target.startsWith('xl/')){} else target='xl/'+target.replace(/^\.\//,'');
+  const sheetXml=parser.parseFromString(await xml(target),'application/xml');
+  let shared=[];
+  if(entries['xl/sharedStrings.xml']){
+    const ss=parser.parseFromString(await xml('xl/sharedStrings.xml'),'application/xml');
+    shared=Array.from(ss.getElementsByTagName('si')).map(si=>Array.from(si.getElementsByTagName('t')).map(t=>text(t)).join(''));
+  }
+  const cellVals={}; let maxCol=0;
+  function colNum(ref){let m=String(ref||'').match(/^([A-Z]+)\d+$/i); if(!m)return 0; let n=0; for(const ch of m[1].toUpperCase()) n=n*26+(ch.charCodeAt(0)-64); return n-1;}
+  Array.from(sheetXml.getElementsByTagName('row')).forEach(row=>{
+    Array.from(row.getElementsByTagName('c')).forEach(c=>{
+      const ref=c.getAttribute('r')||''; const idx=colNum(ref); maxCol=Math.max(maxCol,idx);
+      const type=c.getAttribute('t')||''; const v=c.getElementsByTagName('v')[0]; let val='';
+      if(type==='inlineStr'){ val=Array.from(c.getElementsByTagName('t')).map(t=>text(t)).join(''); }
+      else if(v){ val=text(v); if(type==='s') val=shared[parseInt(val,10)]??''; else if(type==='b') val=val==='1'?'TRUE':'FALSE'; }
+      cellVals[ref]=val;
+    });
+  });
+  const rows=[];
+  Array.from(sheetXml.getElementsByTagName('row')).forEach(row=>{
+    const obj={}; Array.from(row.getElementsByTagName('c')).forEach(c=>{
+      const ref=c.getAttribute('r')||''; const idx=colNum(ref); let col=''; let n=idx+1; while(n){let r=(n-1)%26; col=String.fromCharCode(65+r)+col; n=Math.floor((n-1)/26);}
+      obj[col]=cellVals[ref]??'';
+    }); rows.push(obj);
+  });
+  if(!rows.length) return {rows:[],sheetName:targetSheet.name};
+  const headers=Object.keys(rows[0]).sort((a,b)=>{const na=colNum(a+'1'),nb=colNum(b+'1');return na-nb;});
+  const out=rows.slice(1).map(r=>{const o={}; headers.forEach(h=>o[h]=r[h]??''); return o;});
+  return {rows:out,sheetName:targetSheet.name};
+}
 function openExcelPicker(handler, accept='.xlsx,.xls'){
   const input=document.createElement('input'); input.type='file'; input.accept=accept; input.style.display='none';
   document.body.appendChild(input);
   input.onchange=()=>{ const f=input.files&&input.files[0]; if(f) handler(f); setTimeout(()=>input.remove(),0); };
   input.click();
 }
-function readExcelRows(file, preferredSheet){
-  if(!ensureXLSX()) return Promise.reject(new Error('Excel indisponible.'));
-  return new Promise((resolve,reject)=>{
-    const reader=new FileReader();
-    reader.onload=e=>{ try{
-      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
-      const sheetName=preferredSheet && wb.SheetNames.includes(preferredSheet) ? preferredSheet : wb.SheetNames[0];
-      if(!sheetName) throw new Error('Aucune feuille.');
-      resolve({rows:XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{defval:''}),sheetName});
-    }catch(err){reject(err);} };
-    reader.onerror=()=>reject(new Error('Lecture impossible.'));
-    reader.readAsArrayBuffer(file);
-  });
+async function readExcelRows(file, preferredSheet){
+  if(ensureXLSX()){
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=e=>{ try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const sheetName=preferredSheet && wb.SheetNames.includes(preferredSheet) ? preferredSheet : wb.SheetNames[0];
+        if(!sheetName) throw new Error('Aucune feuille.');
+        resolve({rows:XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{defval:''}),sheetName});
+      }catch(err){reject(err);} };
+      reader.onerror=()=>reject(new Error('Lecture impossible.'));
+      reader.readAsArrayBuffer(file);
+    });
+  }
+  const name=String(file && file.name || '').toLowerCase();
+  if(name.endsWith('.xlsx')) return readNativeXLSX(file,preferredSheet);
+  throw new Error('Import XLS nécessite SheetJS. Utilisez un fichier .xlsx.');
 }
 function importOperateursExcel(){
   const groupe = getCurrentGroupe();
@@ -1809,8 +1886,8 @@ function renderResume(){
   function getRows(m){
     const rows=[];
     const main=refs.moules.find(x=>x.id===m.mouleId);
-    if(main) rows.push({moule:main, cycle:String(m.cycle||'').trim(), couleurId:m.couleur});
-    (m.moulesAvances||[]).forEach(ma=>{ const mo=refs.moules.find(x=>x.id===ma.mouleId); if(mo) rows.push({moule:mo, cycle:String(ma.cycle||'').trim(), couleurId:ma.couleur}); });
+    if(main) rows.push({moule:main, cycle:String(m.cycle||'').trim(), couleurId:m.couleur, empReels:String(m.piecesReelles ?? main.piecesReelles ?? '').trim()});
+    (m.moulesAvances||[]).forEach(ma=>{ const mo=refs.moules.find(x=>x.id===ma.mouleId); if(mo) rows.push({moule:mo, cycle:String(ma.cycle||'').trim(), couleurId:ma.couleur, empReels:String(ma.piecesReelles ?? mo.piecesReelles ?? '').trim()}); });
     return rows;
   }
   ordered.forEach(id=>{
@@ -1851,12 +1928,12 @@ function renderResume(){
       else if(!noMoule && !cyMiss && !opMiss) dot = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#16a34a;margin-right:5px;vertical-align:middle"></span>';
       const moulds = noMoule ? '<span style="color:#777">Aucun moule</span>' : r.mouldRows.map(x=>{
         const col = refs.couleurs.find(c=>c.id===(x.couleurId||r.m.couleur));
-        return `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:10px;padding:3px 8px;border:1px solid #ddd;border-radius:8px"><b>${esc(x.moule.numero)}</b><span>${esc(col?col.nom:'—')}</span></span>`;
+        return `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:10px;padding:3px 8px;border:none;border-radius:8px;white-space:nowrap;flex:0 0 auto"><b>${esc(x.moule.numero)}</b><span>${esc(col?col.nom:'—')}</span><span style="font-weight:700;color:#555">Emp: ${esc(x.empReels||'—')}</span></span>`;
       }).join('');
       const obsIcon = hasObs ? `<span title="${esc(hasObs)}" style="color:var(--red);margin-left:6px;font-size:12px;">📝</span>` : '';
       html += `<div style="display:flex;align-items:center;gap:6px;padding:8px 4px;border-bottom:1px solid #eee;flex-wrap:wrap">
         <span style="min-width:88px;font-weight:700;white-space:nowrap">${dot}${esc(String(r.c.num||r.id))}${obsIcon}</span>
-        <span style="display:flex;align-items:center;flex-wrap:wrap">${moulds}</span>
+        <span style="display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;min-width:0">${moulds}</span>
       </div>`;
       if(hasObs) html += `<div style="padding:0 4px 8px 100px;font-size:11px;color:var(--grey);font-style:italic;white-space:pre-wrap;border-bottom:1px solid #f5f5f5;">${esc(hasObs)}</div>`;
     });
