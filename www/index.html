@@ -174,9 +174,7 @@
   .rp-sign > div{ flex:1 1 140px; min-width:0; text-align:center; }
   .rp-sign span{ display:block; font-size:11px; font-weight:700; text-transform:uppercase; margin-bottom:10px; }
   .rp-sign input{ text-align:center; border:none; border-bottom:1px solid var(--ink); font-weight:600; font-size:13px; padding:6px 2px; min-width:0; }
-
-<style>
-
+</style>
 
 <style>
 .cycle-theo-field{
@@ -195,8 +193,6 @@
 .ref-popup-option + .ref-popup-option{margin-top:2px;}
 .ref-popup-option:active,.ref-popup-option:hover{background:#f1f3f6;}
 .ref-popup-option.selected{background:#e9edf2;font-weight:800;}
-</style>
-</style>
 </style>
 
 <style>
@@ -388,6 +384,14 @@ window.addEventListener('error', function(ev){
 window.addEventListener('unhandledrejection', function(ev){
   try{
     alert('Erreur (promesse) détectée:\n' + (ev.reason && ev.reason.message ? ev.reason.message : ev.reason));
+  }catch(e){}
+});
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    const b=document.createElement('div');
+    b.textContent='DEBUG BUILD v32';
+    b.style.cssText='position:fixed;bottom:4px;right:4px;z-index:999999;background:#e74c3c;color:#fff;font:bold 10px sans-serif;padding:3px 7px;border-radius:5px;opacity:.85;pointer-events:none;';
+    document.body.appendChild(b);
   }catch(e){}
 });
 
@@ -1624,7 +1628,4 @@ function renderAdvancedT2(id){
   el.innerHTML=arr.map((ma,i)=>{
     const mo=mouleForId(ma.mouleId);
     return `<div style="padding:12px 0;border-top:1px solid var(--line);margin-top:8px;">
-      <div class="moule-lookup" style="grid-template-columns:1.6fr 1fr;">
-        <div class="ac-wrap"><label style="font-size:10px;">N° 2ème moule</label>
-          ${acInputHTML({id:'f_moule_s'+i, field:'moule', machineId:id, value: mo?mo.numero:'', placeholder:'Tapez 2 lettres/chiffres…', secondary:true, index:i, style:'font-size:16px;font-weight:800;'})}
-          <div class=
+      <
