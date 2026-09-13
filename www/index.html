@@ -2596,9 +2596,9 @@ function buildTourneeRows(day){
     const piecesTheo = parseFloat(moule?.piecesParMoule) || 0;
     // Empr. Réelle is entered manually by the operator (e.g. 6).
     const emprReel = parseFloat(m.piecesReelles) || 0;
-    // Quantité théorique = 7h30 de production théorique, sans déduire les arrêts.
-    // Basée sur le Cycle référence (cycle théorique) et les pièces théoriques du moule.
-    const qteTheo = (piecesTheo > 0 && cycleRef > 0) ? Math.floor((7.5 * 3600) / cycleRef) * piecesTheo : '';
+    // Quantité théorique Excel = (27000 / Cycle) × Pièces réelles.
+    // Le temps d'arrêt n'est pas déduit.
+    const qteTheo = (cycleActuel > 0 && emprReel > 0) ? (27000 / cycleActuel) * emprReel : '';
     // Quantité réelle = quantity actually produced.
     const qteReelle = parseFloat(m.production) || 0;
 
@@ -2614,7 +2614,7 @@ function buildTourneeRows(day){
       'Empr. Réelle':       emprReel || '',
       'Cycle référence':    moule ? cycleTheoMoule(moule) : '',
       'Cycle':              m.cycle || '',
-      'Quantité théorique': qteTheo,
+      'Quantité théorique': qteTheo === '' ? '' : Math.round(qteTheo),
       'Quantité réelle':    qteReelle || '',
       'déchet':             m.rebuts || '',
       'Matière':            m.matiere || '',
@@ -2636,11 +2636,13 @@ function buildTourneeRows(day){
       const moule2 = refs.moules.find(x => x.id === ma.mouleId);
       const couleur2 = refs.couleurs.find(x => x.id === ma.couleur);
 
-      // Même calcul pour le 2ème moule : 7h30 théoriques, sans déduire les arrêts.
+      // Quantité théorique Excel = (27000 / Cycle) × Pièces réelles.
+      // Le temps d'arrêt n'est pas déduit.
       const piecesTheo2 = parseFloat(moule2?.piecesParMoule) || 0;
       const cycleRef2 = parseFloat(cycleTheoMoule(moule2)) || 0;
       const emprReel2 = parseFloat(ma.piecesReelles) || 0;
-      const qteTheo2 = (piecesTheo2 > 0 && cycleRef2 > 0) ? Math.floor((7.5 * 3600) / cycleRef2) * piecesTheo2 : '';
+      const cycleActuel2 = parseFloat(ma.cycle) || 0;
+      const qteTheo2 = (cycleActuel2 > 0 && emprReel2 > 0) ? (27000 / cycleActuel2) * emprReel2 : '';
       const qteReelle2 = parseFloat(ma.production) || 0;
 
       rows.push({
@@ -2655,7 +2657,7 @@ function buildTourneeRows(day){
         'Empr. Réelle':       emprReel2 || '',
         'Cycle référence':    moule2 ? cycleTheoMoule(moule2) : '',
         'Cycle':              ma.cycle || '',
-        'Quantité théorique': qteTheo2,
+        'Quantité théorique': '',
         'Quantité réelle':    qteReelle2 || '',
         'déchet':             ma.rebuts || '',
         'Matière':            ma.matiere || '',
