@@ -1888,6 +1888,19 @@ function updateAdvancedArretRowVisual(id,index,second=false){
   const duree=second?ma.arret2:ma.arret, cause=second?ma.cause2:ma.cause;
   const hasCause=!!String(cause||'').trim(), hasDuree=parseFloat(duree)>0;
   row.className='row '+((hasCause&&hasDuree)?'arret-complete':((hasCause||hasDuree)?'arret-incomplete':'arret-empty'));
+  row.style.marginTop='8px';
+  row.style.borderRadius='6px';
+  row.style.padding='6px';
+  if(hasCause && hasDuree){
+    row.style.background='#dcfce7';
+    row.style.border='1px solid #16a34a';
+  } else if(hasCause || hasDuree){
+    row.style.background='#fee2e2';
+    row.style.border='1px solid #dc2626';
+  } else {
+    row.style.background='';
+    row.style.border='';
+  }
 }
 
 function addAdvancedArret2(id,index){
@@ -2000,16 +2013,6 @@ function updateAdvancedMouleRate(id,index){
   const color=nonJust<=0.05?'#16a34a':(nonJust<=0.5?'#f59e0b':'#dc2626');
   el.innerHTML='<div style="font-size:13px;">Temps non justifié : <b style="color:'+color+';">'+nonJust.toFixed(2)+' h</b></div>';
 }
-function addAdvancedArret2(id,index){
-  if(currentTournee !== 2) return;
-  const day=ensureToday(),m=day.machines[id]; if(!m || !m.moulesAvances || !m.moulesAvances[index]) return;
-  const ma=m.moulesAvances[index];
-  ma.arret2 = ma.arret2 || '';
-  ma.cause2 = ma.cause2 || '';
-  saveDays();
-  renderAdvancedT2(id);
-}
-
 function updateAdvancedMoule(id, index, field, value){
   const day = ensureToday(), m = day.machines[id];
   if(!m.moulesAvances || !m.moulesAvances[index]) return;
